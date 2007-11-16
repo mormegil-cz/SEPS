@@ -1,0 +1,183 @@
+a
+{
+	text-decoration: none;
+}
+
+#sitelogo
+{
+	float: left;
+}
+
+#sitecaption
+{
+	font-size: 3em;
+	padding-left: 2em;
+	margin-left: 2em;
+	text-transform: uppercase;
+}
+
+#page
+{
+	clear: both;
+	position: relative;
+}
+
+#menu
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 150px;
+}
+
+#contents
+{
+	margin-left: 160px;
+}
+
+img
+{
+	border: 0 none;
+}
+
+br.cleaner
+{
+	height: 0px;
+	clear: both;
+}
+
+div.calendar
+{
+	width: 30em;
+}
+
+table.calendar caption
+{
+	font-size: large;
+	font-weight: bold;
+}
+
+table.calendar
+{
+	/* border: 1px solid black; */
+	width: 100%;
+}
+
+table.calendar td
+{
+	margin: 5px;
+	border: 1px dotted black;
+	vertical-align: top;
+}
+
+table.calendar td div.addevent
+{
+	float: right;
+	font-size: x-small;
+}
+
+table.calendar td.holiday
+{
+	border: 2px solid #fdf;
+}
+
+table.calendar td.past
+{
+	border: 1px dotted gray;
+	background-color: #eee;
+}
+
+table.calendar td.today
+{
+	border: 1px solid blue;
+	background-color: #eef;
+}
+
+table.calendar td.selected
+{
+	border: 1px solid blue;
+}
+
+table.calendar td.future span.date
+{
+	font-weight: bold;
+}
+
+table.calendar td.future div.event-empty
+{
+	background-color: #ffb;
+}
+
+table.calendar td.future div.event-filled
+{
+	background-color: #dfd;
+}
+
+table.calendar td.future div.event-full
+{
+	background-color: #fdd;
+}
+
+td.future a.event-detail
+{
+	color: blue;
+}
+
+td.past a.event-detail
+{
+	color: #339;
+}
+
+div.calendar div.linknext
+{
+	float: right;
+	font-size: small;
+}
+
+div.calendar div.linkprev
+{
+	float: left;
+	font-size: small;
+}
+
+div.eventdetail
+{
+	float: right;
+	width: 15em;
+	margin: 10px;
+	padding: 10px;
+	border: 1px solid #55a;
+	background-color: #f3f3ff;
+}
+
+div.eventdetail h2
+{
+	font-size: x-large;
+	font-weight: bold;
+	margin: 0 0 10px 0;
+	border-bottom: 1px solid #55a;
+	width: 100%;
+}
+
+div.eventdetail ul
+{
+	margin: 0 0 10px 0;
+	padding: 0;
+}
+
+div.eventdetail li
+{
+	list-style-type: none;
+}
+
+p.nosubscribers
+{
+	font-style: italic;
+	margin: 1em 0;
+}
+
+div.newevent
+{
+	margin: 1em 0;
+	border-top: 1px solid black;
+}

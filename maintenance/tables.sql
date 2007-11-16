@@ -32,6 +32,7 @@ CREATE TABLE users (
   priority SMALLINT NOT NULL DEFAULT 0,
   email VARCHAR(100) NOT NULL DEFAULT '',
   icq VARCHAR(12) NOT NULL DEFAULT '',
+  emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -54,4 +55,15 @@ CREATE TABLE subscriptions (
   CONSTRAINT FK_subscriptions_users FOREIGN KEY FK_subscriptions_users (user) REFERENCES users (id),
   CONSTRAINT FK_subscriptions_events FOREIGN KEY FK_subscriptions_events (event) REFERENCES events (id),
   INDEX IX_subscriptions_event_priority_subscribed(event, priority, subscribed)
+);
+
+CREATE TABLE emailcodes (
+  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  code VARCHAR(25) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  fromuser INTEGER UNSIGNED NOT NULL,
+  createdate DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT FK_emailcodes_fromuser FOREIGN KEY FK_emailcodes_fromuser (fromuser) REFERENCES users(id),
+  CONSTRAINT UN_code UNIQUE INDEX UN_code(code)
 );

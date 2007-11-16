@@ -11,3 +11,5 @@ define('sepsAccessFlagsCanChangeUserAccess', 0x0080);
 define('sepsAccessFlagsCanSendWebMessages', 0x0100);
 define('sepsAccessFlagsCanSendMailMessages', 0x0200);
 define('sepsAccessFlagsCanEditEventTypes', 0x0400);
+
+define('sepsEmailCodeLength', 25);

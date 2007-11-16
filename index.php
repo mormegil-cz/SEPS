@@ -6,6 +6,7 @@ require_once('./include/DefaultSettings.php');
 require_once('./LocalSettings.php');
 require_once('./include/Setup.php');
 require_once('./include/Login.php');
+require_once('./include/Invitations.php');
 
 echo <<<EOT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -26,6 +27,8 @@ echo <<<EOT
     <div id='contents'>
 EOT;
 
+receivedInvitation(getVariableOrNull('inv'));
+
 // $action = 'login';
 if ($action == 'login')
 {
@@ -45,12 +48,16 @@ if (!$sepsLoggedUser)
 }
 else
 {
-	include('./include/Events.php');
-	include('./include/News.php');
+	require_once('./include/Events.php');
+	require_once('./include/News.php');
 
 	if ($action == 'createevent')
 	{
 		createNewEvent();
+	}
+	else if ($action == 'sendinvitation')
+	{
+		sendInvitation();
 	}
 
 	printNews();
@@ -76,12 +83,16 @@ else
 	{
 		newEventForm(getVariableOrNull('date'));
 	}
+	else if ($action == 'invite')
+	{
+		invitationForm();
+	}
 
 	echo '<br class="cleaner" />';
 
 	$menu = array();
 	$menu[] = array('?', 'Přehled');
-	if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite) $menu[] = array('?action=invite', 'Pozvat dalšího');
+	if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
 	if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 	if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
 	if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');

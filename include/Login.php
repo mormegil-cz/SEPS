@@ -45,11 +45,11 @@ function performLogin()
 
 function loadLoggedUserInformation()
 {
-	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess;
+	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail;
 
 	if (!$sepsLoggedUser) return;
 
-	$query = mysql_query("SELECT u.caption FROM users u WHERE u.id=$sepsLoggedUser");
+	$query = mysql_query("SELECT u.caption, u.email, u.emailvalidated FROM users u WHERE u.id=$sepsLoggedUser");
 	$row = mysql_fetch_assoc($query);
 	if (!$row)
 	{
@@ -58,6 +58,7 @@ function loadLoggedUserInformation()
 	}
 
 	$sepsLoggedUserCaption = $row['caption'];
+	$sepsLoggedUserEmail = $row['emailvalidated'] ? $row['email'] : null;
 
 	$query = mysql_query("SELECT BIT_OR(access) FROM usersprojects WHERE user=$sepsLoggedUser");
 	$access = mysql_fetch_row($query);

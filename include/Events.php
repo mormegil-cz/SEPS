@@ -325,7 +325,7 @@ function newEventForm($date)
 		$availableTypes[$row['id']] = htmlspecialchars($row['title']);
 	}
 
-	echo '<div class="newevent">';
+	echo '<div class="bottomform newevent">';
 	if ($availableTypes)
 	{
 		echo "<h2>Nová událost na " . strftime('%d.&nbsp;%m.&nbsp;%Y', $date) . "</h2>";

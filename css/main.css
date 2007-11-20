@@ -35,9 +35,28 @@ a
 	margin-left: 160px;
 }
 
+#footer
+{
+	margin-top: 5em;
+	clear: both;
+	font-size: xx-small;
+	font-style: italic;
+	color: gray;
+	width: 100%;
+	padding-top: 0.3em;
+	border-top: 1px dotted gray;
+}
+
 img
 {
 	border: 0 none;
+}
+
+.errmsg
+{
+	color: #700;
+	font-weight: bold;
+	margin-bottom: 1em;
 }
 
 br.cleaner

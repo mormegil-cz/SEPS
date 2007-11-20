@@ -26,6 +26,8 @@ CREATE TABLE events (
 
 CREATE TABLE users (
   id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  password VARCHAR(128) BINARY NOT NULL,
   caption VARCHAR(100) NOT NULL,
   firstname VARCHAR(50) NOT NULL DEFAULT  '',
   lastname VARCHAR(50) NOT NULL DEFAULT '',
@@ -33,7 +35,8 @@ CREATE TABLE users (
   email VARCHAR(100) NOT NULL DEFAULT '',
   icq VARCHAR(12) NOT NULL DEFAULT '',
   emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username)
 );
 
 CREATE TABLE usersprojects (
@@ -63,7 +66,17 @@ CREATE TABLE emailcodes (
   email VARCHAR(100) NOT NULL,
   fromuser INTEGER UNSIGNED NOT NULL,
   createdate DATETIME NOT NULL,
+  forproject INTEGER UNSIGNED NOT NULL,
   PRIMARY KEY (id),
   CONSTRAINT FK_emailcodes_fromuser FOREIGN KEY FK_emailcodes_fromuser (fromuser) REFERENCES users(id),
-  CONSTRAINT UN_code UNIQUE INDEX UN_code(code)
+  CONSTRAINT FK_emailcodes_forproject FOREIGN KEY FK_emailcodes_forproject (forproject) REFERENCES projects(id),
+  CONSTRAINT UN_emailcodes_code UNIQUE INDEX UN_emailcodes_code(code)
+);
+
+CREATE TABLE logs (
+  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  timestamp DATETIME NOT NULL,
+  entry VARCHAR(512) NOT NULL,
+  PRIMARY KEY (id),
+  INDEX IX_log_timestamp (timestamp)
 );

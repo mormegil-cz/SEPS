@@ -8,6 +8,126 @@ require_once('./include/Setup.php');
 require_once('./include/Login.php');
 require_once('./include/Invitations.php');
 
+function mainPageContents()
+{
+	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser;
+
+	$invitation = getVariableOrNull('inv');
+	if ($invitation)
+	{
+		receivedInvitation($invitation);
+		return;
+	}
+
+	if ($action == 'acceptedinvitation')
+	{
+		performLogout();
+		if (acceptedInvitation()) performLogin();
+		else return;
+	}
+
+	// $action = 'login';
+	if ($action == 'login')
+	{
+		performLogin();
+	}
+	else if ($action == 'logout')
+	{
+		performLogout();
+	}
+
+	$sepsLoggedUserCaption = null;
+	$sepsLoggedUserMaxAccess = 0;
+	loadLoggedUserInformation();
+
+	$menu = null;
+
+	if ($sepsPageMessage)
+	{
+		echo "<div class='globalmsg'>$sepsPageMessage</div>";
+	}
+
+	if (!$sepsLoggedUser)
+	{
+		// nepřihlášený uživatel
+		loginScreen();
+	}
+	else
+	{
+		require_once('./include/Events.php');
+		require_once('./include/News.php');
+
+		if ($action == 'createevent')
+		{
+			createNewEvent();
+		}
+		else if ($action == 'sendinvitation')
+		{
+			sendInvitation();
+		}
+
+		printNews();
+
+		$selectedEvent = getVariableOrNull('eid');
+		if ($selectedEvent)
+		{
+			if ($action == 'subscribe')
+			{
+				subscribeToEvent($selectedEvent);
+			}
+			else if ($action == 'unsubscribe')
+			{
+				unsubscribeFromEvent($selectedEvent);
+			}
+
+			printEventDetails($selectedEvent);
+		}
+
+		printEventsCalendar($selectedEvent || $action);
+
+		if ($action == 'newevent')
+		{
+			newEventForm(getVariableOrNull('date'));
+		}
+		else if ($action == 'invite')
+		{
+			invitationForm();
+		}
+		else if ($action == 'manageusers')
+		{
+		}
+		else if ($action == 'manageeventtypes')
+		{
+		}
+
+		echo '<br class="cleaner" />';
+
+		$menu = array();
+		$menu[] = array('?', 'Přehled');
+		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
+		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
+		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
+		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
+		$menu[] = array('?action=logout', 'Odhlásit se');
+	}
+
+	echo '    </div>';
+
+	if ($menu)
+	{
+		echo '    <div id="menu">';
+		echo '<p class="loggedin">Uživatel: ' . htmlspecialchars($sepsLoggedUserCaption) . '</p>';
+		echo '<ul>';
+		foreach($menu as $item)
+		{
+			echo "<li><a href='$item[0]'>$item[1]</a></li>";
+		}
+		echo '    </ul></div>';
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------
+
 echo <<<EOT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -27,92 +147,11 @@ echo <<<EOT
     <div id='contents'>
 EOT;
 
-receivedInvitation(getVariableOrNull('inv'));
+	mainPageContents();
 
-// $action = 'login';
-if ($action == 'login')
-{
-	performLogin();
-}
-else if ($action == 'logout')
-{
-	performLogout();
-}
-
-$menu = null;
-
-if (!$sepsLoggedUser)
-{
-	// nepřihlášený uživatel
-	loginScreen();
-}
-else
-{
-	require_once('./include/Events.php');
-	require_once('./include/News.php');
-
-	if ($action == 'createevent')
-	{
-		createNewEvent();
-	}
-	else if ($action == 'sendinvitation')
-	{
-		sendInvitation();
-	}
-
-	printNews();
-
-	$selectedEvent = getVariableOrNull('eid');
-	if ($selectedEvent)
-	{
-		if ($action == 'subscribe')
-		{
-			subscribeToEvent($selectedEvent);
-		}
-		else if ($action == 'unsubscribe')
-		{
-			unsubscribeFromEvent($selectedEvent);
-		}
-
-		printEventDetails($selectedEvent);
-	}
-
-	printEventsCalendar($selectedEvent || $action);
-
-	if ($action == 'newevent')
-	{
-		newEventForm(getVariableOrNull('date'));
-	}
-	else if ($action == 'invite')
-	{
-		invitationForm();
-	}
-
-	echo '<br class="cleaner" />';
-
-	$menu = array();
-	$menu[] = array('?', 'Přehled');
-	if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
-	if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
-	if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
-	if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
-	$menu[] = array('?action=logout', 'Odhlásit se');
-}
-
-echo '    </div>';
-
-if ($menu)
-{
-	echo '    <div id="menu"><ul>';
-	foreach($menu as $item)
-	{
-		echo "<li><a href='$item[0]'>$item[1]</a></li>";
-	}
-	echo '    </ul></div>';
-}
+  echo '</div>';
+  echo "<div id='footer'>Powered by $sepsSoftwareAboutLine. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></div>';
 
 ?>
-  </div>
-
  </body>
 </html>

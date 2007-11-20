@@ -3,6 +3,8 @@
 session_name('sepssession');
 session_start();
 
+$sepsPageMessage = '';
+
 $sepsLoggedUser = getSessionOrNull('loggeduser');
 $action = getVariableOrNull('action');
 
@@ -19,9 +21,3 @@ if (!getSessionOrNull('noipcheck'))
 
 include('./include/Database.php');
 initDatabase();
-
-$sepsLoggedUserCaption = null;
-$sepsLoggedUserMaxAccess = 0;
-
-require_once('./include/Login.php');
-loadLoggedUserInformation();

@@ -2,9 +2,9 @@
 
 function loginScreen()
 {
-	echo '<div class="loginform"><form action="?" method="post"><input type="hidden" name="action" value="login" />';
+	echo '<div class="bigform login"><form action="?" method="post"><input type="hidden" name="action" value="login" />';
 	if (getVariableOrNull('noip')) echo '<input type="hidden" name="noipcheck" value="1" />';
-	echo 'Uživatel: <input type="text" name="username" /><br />';
+	echo 'Uživatel: <input type="text" name="username" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
 	echo 'Heslo: <input type="password" name="password" /><br />';
 	echo '<input type="submit" value="Přihlásit se" />';
 	echo '</form></div>';
@@ -25,12 +25,14 @@ function performLogin()
 
 	performLogout();
 
-	// TODO: heslo
-	$loginSuccess = true;
+	$username = getVariableOrNull('username');
+	$password = getVariableOrNull('password');
+
+	$loginSuccess = tryLogin($username, $password);
 
 	if ($loginSuccess)
 	{
-		$sepsLoggedUser = 1;
+		$sepsLoggedUser = $loginSuccess;
 
 		$_SESSION['loggeduser'] = $sepsLoggedUser;
 		if (getVariableOrNull('noipcheck')) $_SESSION['noipcheck'] = 1;
@@ -63,4 +65,21 @@ function loadLoggedUserInformation()
 	$query = mysql_query("SELECT BIT_OR(access) FROM usersprojects WHERE user=$sepsLoggedUser");
 	$access = mysql_fetch_row($query);
 	$sepsLoggedUserMaxAccess = $access[0];
+}
+
+function hashPassword($password)
+{
+	global $sepsPasswordHashingAlgorithm;
+	return hash($sepsPasswordHashingAlgorithm, $password);
+}
+
+function tryLogin($username, $password)
+{
+	if (!$username) return FALSE;
+
+	$hash = hashPassword($password);
+
+	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.password='$hash'");
+	$row = mysql_fetch_row($query);
+	if ($row) return $row[0]; else return FALSE;
 }

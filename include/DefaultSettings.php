@@ -9,3 +9,5 @@ $sepsSiteLogo = 'img/defaultlogo.png';
 
 $sepsCalendarWeeks = 4;
 $sepsShowIcqStatus = true;
+$sepsDefaultInvitationAccess = sepsAccessFlagsCanSee | sepsAccessFlagsHasAccess | sepsAccessFlagsCanSeeContacts | sepsAccessFlagsCanInvite;
+$sepsPasswordHashingAlgorithm = 'sha256';

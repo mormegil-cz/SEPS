@@ -96,6 +96,9 @@ function mainPageContents()
 		{
 			invitationForm();
 		}
+		else if ($action == 'messaging')
+		{
+		}
 		else if ($action == 'manageusers')
 		{
 		}
@@ -103,6 +106,11 @@ function mainPageContents()
 		{
 			require_once('./include/EventTypes.php');
 			eventTypesForm();
+		}
+		else if ($action == 'viewlog')
+		{
+			require_once('./include/Logging.php');
+			display_log();
 		}
 
 		echo '<br class="cleaner" />';
@@ -155,7 +163,7 @@ EOT;
 	mainPageContents();
 
   echo '</div>';
-  echo "<div id='footer'>Powered by $sepsSoftwareAboutLine. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></div>';
+  echo "<div id='footer'>Powered by <a href='$sepsSoftwareHomePage'>$sepsSoftwareAboutLine</a>. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></div>';
 
 ?>
  </body>

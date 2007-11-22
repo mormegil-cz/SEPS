@@ -190,6 +190,22 @@ function eventTypesForm()
 	}
 
 	echo '<input type="submit" name="doexecute" value="Provést změny" />';
+
+	if ($projectId)
+	{
+		echo '<div class="eventlist"><table class="eventtypesoverview">';
+		echo '<thead><caption>Definované typy</caption></thead>';
+		echo '<tbody>';
+		echo '<tr><th>Název</th><th>Min</th><th>Max</th></tr>';
+		$query = mysql_query("SELECT t.title, t.minpeople, t.capacity FROM eventtypes t WHERE t.project=$projectId");
+		while ($row = mysql_fetch_assoc($query))
+		{
+			echo '<tr><td>' . htmlspecialchars($row['title']) . "</td><td>$row[minpeople]</td><td>$row[capacity]</td></tr>";
+		}
+		echo '</tbody>';
+		echo '</table></div>';
+	}
+
 	echo '</div>';
 	echo '</form>';
 }

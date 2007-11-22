@@ -229,3 +229,25 @@ div.bottomform
 	margin: 1em 0;
 	border-top: 1px solid black;
 }
+
+div.eventlist
+{
+	margin-top: 1em
+}
+
+table.eventtypesoverview
+{
+	border: 1px solid black;
+}
+
+table.eventtypesoverview caption
+{
+	font-size: large;
+	font-weight: bold;
+}
+
+table.eventtypesoverview td
+{
+	margin: 5px;
+	border-top: 1px dotted black;
+}

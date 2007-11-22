@@ -99,6 +99,11 @@ class Event
 		return $this->m_SubscriberCount;
 	}
 
+	function getCapacity()
+	{
+		return $this->m_Capacity;
+	}
+
 	function isFilled()
 	{
 		return $this->m_SubscriberCount >= $this->m_MinSubscribers;
@@ -228,19 +233,25 @@ function printEventDetails($eid)
 
 	$access = $event->getUserAccess($sepsLoggedUser);
 	$eventdate = $event->getDate();
+	if (!($access & sepsAccessFlagsCanSee)) return;
 
 	$isSubscribed = false;
 
 	echo '<div class="eventdetail">';
 	echo '<h2>' . htmlspecialchars($event->getTitle()) . ' ' . strftime('%d.&nbsp;%m.&nbsp;%Y', $eventdate) . '</h2>';
-	if ($event->getSubscriberCount() > 0)
+	$eventCapacity = $event->getCapacity();
+	$eventSubscriberCount = $event->getSubscriberCount();
+	if ($eventSubscriberCount > 0)
 	{
+		$subscriberIdx = 0;
 		echo '<ul class="subscribers">';
 		foreach($event->getListOfSubscribers() as $subscriber)
 		{
 			$priority = $subscriber->getPriority();
+			$subscriberIdx++;
+			$subscriberClass = $subscriberIdx > $eventCapacity ? "subscriber-over" : "subscriber-ok";
 			if (!$isSubscribed && $subscriber->getUserID() == $sepsLoggedUser) $isSubscribed = true;
-			echo "<li class='priority-$priority'>" . $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts) . '</li>';
+			echo "<li class='priority-$priority $subscriberClass'>" . $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts) . '</li>';
 		}
 		echo '</ul>';
 	}
@@ -255,7 +266,11 @@ function printEventDetails($eid)
 		if ($isSubscribed)
 			echo '<input type="hidden" name="action" value="unsubscribe" /><input type="submit" value="Odhlásit se" />';
 		else
-			echo '<input type="hidden" name="action" value="subscribe" /><input type="submit" value="Přihlásit se" />';
+		{
+			echo '<input type="hidden" name="action" value="subscribe" /><input type="submit" value="Přihlásit se" ';
+			if ($eventSubscriberCount >= $eventCapacity) echo 'onclick="return confirm(\'Událost je již zaplněna. Chcete se přesto přihlásit?\')" ';
+			echo '/>';
+		}
 		echo '</form>';
 	}
 	if ($access & sepsAccessFlagsCanDeleteEvents)

@@ -98,6 +98,8 @@ function mainPageContents()
 		}
 		else if ($action == 'manageeventtypes')
 		{
+			require_once('./include/EventTypes.php');
+			eventTypesForm();
 		}
 
 		echo '<br class="cleaner" />';
@@ -107,7 +109,7 @@ function mainPageContents()
 		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
 		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
-		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
+		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
 		$menu[] = array('?action=logout', 'Odhlásit se');
 	}
 

@@ -59,6 +59,19 @@ img
 	margin-bottom: 1em;
 }
 
+div.formblock
+{
+	margin-top: 1em;
+	margin-left: 0.5em;
+	padding-left: 0.5em;
+	border-left: 1px dotted #ccf;
+}
+
+input.formblockchooser
+{
+	margin-left: -1.5em;
+}
+
 br.cleaner
 {
 	height: 0px;
@@ -187,6 +200,22 @@ div.eventdetail ul
 div.eventdetail li
 {
 	list-style-type: none;
+}
+
+div.eventdetail li.subscriber-ok
+{
+/*
+	margin-left: -6px;
+	padding-left: 4px;
+	border-left: 2px solid green;
+*/
+}
+
+div.eventdetail li.subscriber-over
+{
+	margin-left: -6px;
+	padding-left: 4px;
+	border-left: 2px solid red;
 }
 
 p.nosubscribers

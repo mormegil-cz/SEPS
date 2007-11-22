@@ -60,6 +60,9 @@ function mainPageContents()
 		if ($action == 'createevent')
 		{
 			createNewEvent();
+		} else if ($action == 'deleteevent')
+		{
+			deleteEvent(getVariableOrNull('eid'));
 		}
 		else if ($action == 'sendinvitation')
 		{

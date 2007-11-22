@@ -62,6 +62,7 @@ class Event
 
 	public static function Load($id)
 	{
+		if (!is_numeric($id)) return null;
 		$query = mysql_query("SELECT e.title, e.date, t.minpeople, t.capacity FROM events e INNER JOIN eventtypes t ON e.eventtype=t.id WHERE e.id=$id");
 		if (!$query) return null;
 		$row = mysql_fetch_assoc($query);
@@ -378,4 +379,34 @@ function createNewEvent()
 	mysql_query(
 		"INSERT INTO events (title, date, eventtype)
 			VALUES ('" . mysql_real_escape_string($eventTitle) . "', '" . strftime('%Y%m%d', $atDate) . "', " . $eventType . ")");
+}
+
+function deleteEvent($eid)
+{
+	global $sepsLoggedUser;
+
+	$event = Event::Load($eid);
+	if (!$event) return;
+
+	// TODO: check date
+	// if ($event->getDate();
+
+	$access = $event->getUserAccess($sepsLoggedUser);
+	if (!($access & sepsAccessFlagsCanDeleteEvents)) return;
+
+	if ($event->getSubscriberCount() > 0)
+	{
+		echo '<div class="errmsg">Tuto událost nelze smazat, neboť jsou na ni stále přihlášeni uživatelé</div>';
+		return;
+	}
+
+	$query = mysql_query("DELETE FROM events WHERE events.id=$eid AND NOT EXISTS (SELECT * FROM subscriptions s WHERE s.event=$eid) LIMIT 1");
+	if ($query && (mysql_affected_rows() > 0))
+	{
+		echo '<div class="infomsg">Událost smazána</div>';
+	}
+	else
+	{
+		echo '<div class="errmsg">Nelze smazat událost</div>';
+	}
 }

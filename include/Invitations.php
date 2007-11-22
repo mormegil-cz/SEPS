@@ -72,10 +72,12 @@ Dobrý den,
 
 uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname
 v plánovacím systému $sepsTitle. Pokud chcete tuto pozvánku přijmout,
-klikněte na následující odkaz a následujte tam uvedené pokyny:
+klikněte na následující odkaz a pokračujte podle tam uvedených pokynů:
    $invitationuri
 
 Pokud pozvánku přijmout nechcete, můžete tuto zprávu ignorovat.
+
+Hezký den!
 EOT
 		, "From: $sepsAdminMail\r\nReply-To: $sepsLoggedUserEmail\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion()))
 	{

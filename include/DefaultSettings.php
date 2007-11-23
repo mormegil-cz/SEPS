@@ -12,3 +12,5 @@ $sepsCalendarWeeks = 4;
 $sepsShowIcqStatus = true;
 $sepsDefaultInvitationAccess = sepsAccessFlagsCanSee | sepsAccessFlagsHasAccess | sepsAccessFlagsCanSeeContacts | sepsAccessFlagsCanInvite;
 $sepsPasswordHashingAlgorithm = 'sha256';
+
+$sepsadminEnable = false;

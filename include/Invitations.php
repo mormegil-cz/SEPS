@@ -82,7 +82,7 @@ EOT
 		, "From: $sepsAdminMail\r\nReply-To: $sepsLoggedUserEmail\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion()))
 	{
 		echo '<div class="infomsg">Pozvánka odeslána</div>';
-		logMessage("Uživatel $sepsLoggedUserCaption poslal pozvánku do projektu $projectname na $email");
+		logMessage("Uživatel $sepsLoggedUserCaption poslal pozvánku do projektu $projectname na $email; kód: $code");
 	}
 	else
 	{
@@ -104,6 +104,7 @@ function receivedInvitation($invitationCode, $errormessage = null)
 	{
 		echo '<h2>Neplatná pozvánka</h2>';
 		echo '<div class="errmsg">Tento odkaz nevede na žádnou platnou pozvánku. Možná již byla použita nebo její platnost vypršela.</div>';
+		echo '<div>Pokud se chcete přihlásit, pokračujte na <a href="' . htmlspecialchars($sepsFullBaseUri) . '">hlavní stranu</a>.</div>';
 		return;
 	}
 
@@ -163,10 +164,10 @@ function acceptedInvitation()
 	}
 
 	$invitationQuery = mysql_query(
-		"SELECT c.fromuser, c.email, up.access, c.forproject
+		"SELECT c.id, c.fromuser, c.email, up.access, c.forproject
 		FROM emailcodes c
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND up.access & " . sepsAccessFlagsCanInvite);
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
 	$invitation = mysql_fetch_assoc($invitationQuery);
 	if (!$invitation)
 	{
@@ -184,6 +185,8 @@ function acceptedInvitation()
 			return FALSE;
 		}
 
+    mysql_query("BEGIN");
+
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
 		$userid = $founduser['id'];
@@ -192,6 +195,12 @@ function acceptedInvitation()
 
 		// nastavit příznak ověření e-mailu
 		mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1");
+
+    // označit pozvánku jako použitou
+    $invitationId = $invitation['id'];
+    mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId");
+
+    mysql_query("COMMIT");
 
 		logMessage("Uživatel $username přijal pozvánku číslo $invitationCode");
 		return TRUE;
@@ -207,6 +216,8 @@ function acceptedInvitation()
 		if (!$caption) $caption = $username;
 		$email = $invitation['email'];
 
+    mysql_query("BEGIN");
+
 		// založit nového uživatele
 		if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, icq, emailvalidated) VALUES ('"
 			. mysql_real_escape_string($username) . "', '"
@@ -217,6 +228,7 @@ function acceptedInvitation()
 			. mysql_real_escape_string($email) . "', '"
 			. mysql_real_escape_string($icq) . "', 1)"))
 		{
+      mysql_query("ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se založit uživatele, zkuste to znovu.');
 			return FALSE;
 		}
@@ -229,6 +241,12 @@ function acceptedInvitation()
 		$project = $invitation['forproject'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess;
 		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
+
+    // označit pozvánku jako použitou
+    $invitationId = $invitation['id'];
+    mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId");
+
+    mysql_query("COMMIT");
 
 		logMessage("Založen uživatel $username na základě pozvánky číslo $invitationCode");
 

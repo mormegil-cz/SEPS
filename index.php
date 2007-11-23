@@ -10,7 +10,7 @@ require_once('./include/Invitations.php');
 
 function mainPageContents()
 {
-	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser;
+	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser, $sepsadminEnable;
 
 	$invitation = getVariableOrNull('inv');
 	if ($invitation)
@@ -56,6 +56,13 @@ function mainPageContents()
 	{
 		require_once('./include/Events.php');
 		require_once('./include/News.php');
+        require_once('./include/UserSettings.php');
+
+        if ($sepsadminEnable)
+        {
+            include('./include/Administration.php');
+            globalAdministration();
+        }
 
 		if ($action == 'createevent')
 		{
@@ -68,6 +75,10 @@ function mainPageContents()
 		{
 			sendInvitation();
 		}
+		else if ($action == 'savesettings')
+        {
+            saveUserSettings();
+        }
 
 		printNews();
 
@@ -107,6 +118,10 @@ function mainPageContents()
 			require_once('./include/EventTypes.php');
 			eventTypesForm();
 		}
+        else if ($action == 'settings')
+        {
+            userSettingsForm();
+        }
 		else if ($action == 'viewlog')
 		{
 			require_once('./include/Logging.php');
@@ -121,6 +136,7 @@ function mainPageContents()
 		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
+		$menu[] = array('?action=settings', 'Nastavení');
 		$menu[] = array('?action=logout', 'Odhlásit se');
 	}
 

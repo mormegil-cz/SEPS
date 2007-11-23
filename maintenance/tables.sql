@@ -67,6 +67,7 @@ CREATE TABLE emailcodes (
   fromuser INTEGER UNSIGNED NOT NULL,
   createdate DATETIME NOT NULL,
   forproject INTEGER UNSIGNED NOT NULL,
+  accepted TINYINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   CONSTRAINT FK_emailcodes_fromuser FOREIGN KEY FK_emailcodes_fromuser (fromuser) REFERENCES users(id),
   CONSTRAINT FK_emailcodes_forproject FOREIGN KEY FK_emailcodes_forproject (forproject) REFERENCES projects(id),

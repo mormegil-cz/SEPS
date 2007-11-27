@@ -20,6 +20,7 @@ a
 {
 	clear: both;
 	position: relative;
+	_height: 1px;
 }
 
 #menu
@@ -28,6 +29,7 @@ a
 	top: 0;
 	left: 0;
 	width: 150px;
+	_height: 1px;
 }
 
 #contents

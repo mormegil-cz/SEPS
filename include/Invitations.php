@@ -92,13 +92,15 @@ EOT
 
 function receivedInvitation($invitationCode, $errormessage = null)
 {
+    global $sepsFullBaseUri;
+
 	$query = mysql_query(
 		"SELECT c.createdate, c.forproject, u.caption AS user, p.title AS project
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
 		INNER JOIN projects p ON c.forproject=p.id
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND up.access & " . sepsAccessFlagsCanInvite);
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
 	$data = mysql_fetch_assoc($query);
 	if (!$data)
 	{

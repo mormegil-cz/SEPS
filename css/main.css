@@ -65,6 +65,7 @@ div.formblock
 {
 	margin-top: 1em;
 	margin-left: 0.5em;
+	margin-bottom: 0.5em;
 	padding-left: 0.5em;
 	border-left: 1px dotted #ccf;
 }
@@ -80,12 +81,17 @@ br.cleaner
 	clear: both;
 }
 
+td.number
+{
+	text-align: right;
+}
+
 div.calendar
 {
 	width: 30em;
 }
 
-table.calendar caption
+caption
 {
 	font-size: large;
 	font-weight: bold;
@@ -148,6 +154,11 @@ table.calendar td.future div.event-filled
 }
 
 table.calendar td.future div.event-full
+{
+	background-color: #fee;
+}
+
+table.calendar td.future div.event-overfilled
 {
 	background-color: #fdd;
 }
@@ -220,6 +231,26 @@ div.eventdetail li.subscriber-over
 	border-left: 2px solid red;
 }
 
+div.eventdetail li.priority-20
+{
+	color: #040;
+}
+
+div.eventdetail li.priority-10
+{
+	color: #030;
+}
+
+div.eventdetail li.priority--20
+{
+	color: #400;
+}
+
+div.eventdetail li.priority-10
+{
+	color: #300;
+}
+
 p.nosubscribers
 {
 	font-style: italic;
@@ -232,7 +263,7 @@ div.bottomform
 	border-top: 1px solid black;
 }
 
-div.eventlist
+div.eventtypeslist
 {
 	margin-top: 1em
 }
@@ -242,13 +273,29 @@ table.eventtypesoverview
 	border: 1px solid black;
 }
 
-table.eventtypesoverview caption
+table.eventtypesoverview td
 {
-	font-size: large;
-	font-weight: bold;
+	margin: 5px;
+	border-top: 1px dotted black;
 }
 
-table.eventtypesoverview td
+table.eventtypesoverview
+{
+	border: 1px solid black;
+}
+
+div.userslist
+{
+	margin-top: 1em;
+}
+
+table.usersoverview td
+{
+	margin: 5px;
+	border-top: 1px dotted black;
+}
+
+table.usersoverview td
 {
 	margin: 5px;
 	border-top: 1px dotted black;

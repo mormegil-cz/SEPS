@@ -119,10 +119,23 @@ class Event
 		return $this->m_SubscriberCount >= $this->m_Capacity;
 	}
 
+	function isOverfilled()
+	{
+		return $this->m_SubscriberCount > $this->m_Capacity;
+	}
+
 	function getListOfSubscribers()
 	{
 		$eid = $this->m_ID;
-		$query = mysql_query("SELECT u.id, u.caption, u.email, u.icq, s.priority FROM subscriptions s INNER JOIN users u ON s.user=u.id WHERE s.event=$eid ORDER BY s.priority DESC, s.subscribed ASC");
+		$query = mysql_query(
+			"SELECT u.id, u.caption, u.email, u.icq, (up.priority+s.priority) AS priority
+			FROM subscriptions s
+			INNER JOIN users u ON s.user=u.id
+			INNER JOIN events e ON s.event=e.id
+			INNER JOIN eventtypes t ON e.eventtype=t.id
+			INNER JOIN usersprojects up ON up.user=u.id AND up.project=t.project
+			WHERE s.event=$eid
+			ORDER BY up.priority+s.priority DESC, s.subscribed ASC");
 		if (!$query) return null;
 		$result = array();
 		while ($row = mysql_fetch_assoc($query))
@@ -207,8 +220,9 @@ function printEventsCalendar($showSelectedDate)
 			foreach(findEvents($date) as $event)
 			{
 				$cssClass = '';
-				if ($event->isFull()) $cssClass = 'event-full';
-				else if ($event->isFilled()) $cssClass = 'event-filled';
+				if ($event->isOverfilled()) $cssClass = 'event-overfilled';
+				elseif ($event->isFull()) $cssClass = 'event-full';
+				elseif ($event->isFilled()) $cssClass = 'event-filled';
 				else $cssClass = 'event-empty';
 				$eid = $event->getId();
 				$eventTitle = htmlspecialchars($event->getTitle());
@@ -278,7 +292,7 @@ function printEventDetails($eid)
 		}
 		echo '</form>';
 	}
-	if ($access & sepsAccessFlagsCanDeleteEvents)
+	if (($access & sepsAccessFlagsCanDeleteEvents) && ($eventSubscriberCount == 0))
 	{
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
 		echo '<input type="hidden" name="action" value="deleteevent" /><input type="submit" onclick="return confirm(\'Určitě chcete zrušit tuto akci?\')" value="Zrušit akci" />';

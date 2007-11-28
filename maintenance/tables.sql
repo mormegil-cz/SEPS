@@ -43,6 +43,7 @@ CREATE TABLE usersprojects (
   user INTEGER UNSIGNED NOT NULL,
   project INTEGER UNSIGNED NOT NULL,
   access INTEGER UNSIGNED NOT NULL,
+  priority SMALLINT NOT NULL DEFAULT 0,
   PRIMARY KEY (user, project),
   CONSTRAINT FK_userprojects_users FOREIGN KEY FK_userprojects_users (user) REFERENCES users (id),
   CONSTRAINT FK_userprojects_projects FOREIGN KEY FK_userprojects_projects (project) REFERENCES projects (id)

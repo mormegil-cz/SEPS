@@ -52,6 +52,7 @@ function eventTypesForm()
 			case 1:
 				$projectId = $projectIdFound;
 				$projectName = $projectTitleFound;
+				echo "<input type='hidden' name='project' value='$projectId' />";
 				break;
 			default:
 				echo '</select>';
@@ -101,28 +102,28 @@ function eventTypesForm()
 				$changes = 0;
 				if ($editcaption)
 				{
-					if (mysql_query("UPDATE eventtypes SET title='" . mysql_real_escape_string($editcaption) . "' WHERE id=$editeventtype") && (mysql_affected_rows() > 0))
+					if (mysql_query("UPDATE eventtypes SET title='" . mysql_real_escape_string($editcaption) . "' WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně názvu</div>';
 				}
 				if (($editminusers != null) && ($editmaxusers != null))
 				{
-					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers, minpeople=$editminusers WHERE id=$editeventtype") && (mysql_affected_rows() > 0))
+					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers, minpeople=$editminusers WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
 				else if ($editminusers)
 				{
-					if (mysql_query("UPDATE eventtypes SET minpeople=$editminusers WHERE id=$editeventtype AND capacity>=$editminusers") && (mysql_affected_rows() > 0))
+					if (mysql_query("UPDATE eventtypes SET minpeople=$editminusers WHERE id=$editeventtype AND capacity>=$editminusers LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
 				else if ($editmaxusers)
 				{
-					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers WHERE id=$editeventtype AND minpeople<=$editmaxusers") && (mysql_affected_rows() > 0))
+					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers WHERE id=$editeventtype AND minpeople<=$editmaxusers LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
@@ -193,7 +194,7 @@ function eventTypesForm()
 
 	if ($projectId)
 	{
-		echo '<div class="eventlist"><table class="eventtypesoverview">';
+		echo '<div class="eventtypeslist"><table class="eventtypesoverview">';
 		echo '<thead><caption>Definované typy</caption></thead>';
 		echo '<tbody>';
 		echo '<tr><th>Název</th><th>Min</th><th>Max</th></tr>';

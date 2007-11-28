@@ -112,6 +112,8 @@ function mainPageContents()
 		}
 		else if ($action == 'manageusers')
 		{
+			require_once('./include/UserManagement.php');
+			manageUsersForm();
 		}
 		else if ($action == 'manageeventtypes')
 		{
@@ -165,6 +167,11 @@ echo <<<EOT
   <title>$sepsTitle</title>
   <meta name="generator" content="$sepsSoftwareAboutLine" />
   <link rel="stylesheet" href="css/main.css" type="text/css" />
+EOT;
+
+  if ($sepsFavicon) echo "<link rel='shortcut icon' href='$sepsFavicon' type='image/vnd.microsoft.icon' />";
+
+echo <<<EOT
  </head>
  <body>
 

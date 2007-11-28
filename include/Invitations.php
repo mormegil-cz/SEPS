@@ -187,7 +187,7 @@ function acceptedInvitation()
 			return FALSE;
 		}
 
-    mysql_query("BEGIN");
+	    mysql_query("BEGIN");
 
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
@@ -198,11 +198,11 @@ function acceptedInvitation()
 		// nastavit příznak ověření e-mailu
 		mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1");
 
-    // označit pozvánku jako použitou
-    $invitationId = $invitation['id'];
-    mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId");
+		// označit pozvánku jako použitou
+		$invitationId = $invitation['id'];
+		mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1");
 
-    mysql_query("COMMIT");
+		mysql_query("COMMIT");
 
 		logMessage("Uživatel $username přijal pozvánku číslo $invitationCode");
 		return TRUE;
@@ -218,7 +218,7 @@ function acceptedInvitation()
 		if (!$caption) $caption = $username;
 		$email = $invitation['email'];
 
-    mysql_query("BEGIN");
+	    mysql_query("BEGIN");
 
 		// založit nového uživatele
 		if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, icq, emailvalidated) VALUES ('"
@@ -230,7 +230,7 @@ function acceptedInvitation()
 			. mysql_real_escape_string($email) . "', '"
 			. mysql_real_escape_string($icq) . "', 1)"))
 		{
-      mysql_query("ROLLBACK");
+			mysql_query("ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se založit uživatele, zkuste to znovu.');
 			return FALSE;
 		}
@@ -244,11 +244,11 @@ function acceptedInvitation()
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess;
 		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
 
-    // označit pozvánku jako použitou
-    $invitationId = $invitation['id'];
-    mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId");
+		// označit pozvánku jako použitou
+		$invitationId = $invitation['id'];
+		mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1");
 
-    mysql_query("COMMIT");
+		mysql_query("COMMIT");
 
 		logMessage("Založen uživatel $username na základě pozvánky číslo $invitationCode");
 

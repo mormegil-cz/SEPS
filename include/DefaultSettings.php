@@ -7,6 +7,7 @@ $sepsSoftwareHomePage = 'https://opensvn.csie.org/traccgi/seps/';
 
 $sepsTitle = '';
 $sepsSiteLogo = 'img/defaultlogo.png';
+$sepsFavicon = null;
 
 $sepsCalendarWeeks = 4;
 $sepsShowIcqStatus = true;

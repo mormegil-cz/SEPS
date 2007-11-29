@@ -145,18 +145,24 @@ class Event
 		return $result;
 	}
 
-	function getUserAccess($userid)
+	function getUserAccessAndPriority($userid)
 	{
 		$eventid = $this->m_ID;
 		$query = mysql_query(
-			"SELECT access
+			"SELECT access, priority
 			FROM usersprojects up
 			INNER JOIN eventtypes t ON t.project=up.project
 			INNER JOIN events e ON e.eventtype=t.id
 			WHERE e.id=$eventid AND up.user=$userid");
 		$row = mysql_fetch_assoc($query);
-		if (!$row) return 0;
-		return $row['access'];
+		if (!$row) return array(0, 0);
+		return array($row['access'], $row['priority']);
+	}
+
+	function getUserAccess($userid)
+	{
+		$accessAndPriority = $this->getUserAccessAndPriority($userid);
+		return $accessAndPriority[0];
 	}
 }
 
@@ -250,7 +256,10 @@ function printEventDetails($eid)
 	$event = Event::Load($eid);
 	if (!$event) return;
 
-	$access = $event->getUserAccess($sepsLoggedUser);
+	$accessAndPriority = $event->getUserAccessAndPriority($sepsLoggedUser);
+
+	$access = $accessAndPriority[0];
+	$userPriority = $accessAndPriority[1];
 	$eventdate = $event->getDate();
 	if (!($access & sepsAccessFlagsCanSee)) return;
 
@@ -260,6 +269,7 @@ function printEventDetails($eid)
 	echo '<h2>' . htmlspecialchars($event->getTitle()) . ' ' . strftime('%d.&nbsp;%m.&nbsp;%Y', $eventdate) . '</h2>';
 	$eventCapacity = $event->getCapacity();
 	$eventSubscriberCount = $event->getSubscriberCount();
+	$eventSubscriberWithPriorityCount = 0;
 	if ($eventSubscriberCount > 0)
 	{
 		$subscriberIdx = 0;
@@ -270,6 +280,7 @@ function printEventDetails($eid)
 			$subscriberIdx++;
 			$subscriberClass = $subscriberIdx > $eventCapacity ? "subscriber-over" : "subscriber-ok";
 			if (!$isSubscribed && $subscriber->getUserID() == $sepsLoggedUser) $isSubscribed = true;
+			elseif ($priority >= $userPriority) $eventSubscriberWithPriorityCount++;
 			echo "<li class='priority-$priority $subscriberClass'>" . $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts) . '</li>';
 		}
 		echo '</ul>';
@@ -287,7 +298,8 @@ function printEventDetails($eid)
 		else
 		{
 			echo '<input type="hidden" name="action" value="subscribe" /><input type="submit" value="Přihlásit se" ';
-			if ($eventSubscriberCount >= $eventCapacity) echo 'onclick="return confirm(\'Událost je již zaplněna. Chcete se přesto přihlásit?\')" ';
+			if ($eventSubscriberWithPriorityCount >= $eventCapacity) echo 'onclick="return confirm(\'Událost je již zaplněna. Chcete se přesto přihlásit?\')" ';
+			elseif ($eventSubscriberCount >= $eventCapacity) echo 'onclick="return confirm(\'Svým přihlášením vyřadíte uživatele s nižší prioritou. Chcete se přesto přihlásit?\')" ';
 			echo '/>';
 		}
 		echo '</form>';

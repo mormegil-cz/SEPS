@@ -191,7 +191,7 @@ function modifyUser($projectId, $projectName)
 	if (($addAccess & $removeAccess) != 0) $addAccess = $removeAccess = 0;
 
 	$query = '';
-	if ($newpriority) $query .= ", priority=$newpriority";
+	if ($newpriority != null) $query .= ", priority=$newpriority";
 	if ($removeAccess || $addAccess)
 	{
 		$removeMask = ~$removeAccess;

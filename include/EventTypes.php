@@ -10,7 +10,7 @@ function eventTypesForm()
 	$projectName = null;
 	if ($projectId)
 	{
-		$nameQuery = mysql_query("SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project.p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
+		$nameQuery = mysql_query("SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
 		$row = mysql_fetch_assoc($nameQuery);
 		if ($row)
 		{
@@ -161,19 +161,22 @@ function eventTypesForm()
 		echo '<label for="addmaxusers">Maximálně účastníků:</label> <input type="text" name="addmaxusers" id="addmaxusers" value="' . htmlspecialchars($addmaxusers) . '" /><br />';
 		echo '</div>';
 
-		echo '<div class="formblock">';
-		echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="edit" /> Editovat existující typ události<br />';
-		echo '<label for="editeventtype">Editovaný typ události:</label> <select name="editeventtype" id="editeventtype">';
 		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId");
-		while ($row = mysql_fetch_assoc($query))
+		if (mysql_num_rows($query))
 		{
-			echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
+			echo '<div class="formblock">';
+			echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="edit" /> Editovat existující typ události<br />';
+			echo '<label for="editeventtype">Editovaný typ události:</label> <select name="editeventtype" id="editeventtype">';
+			while ($row = mysql_fetch_assoc($query))
+			{
+				echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
+			}
+			echo '</select><br />';
+			echo '<label for="editcaption">Název:</label> <input type="text" name="editcaption" id="editcaption" value="' . htmlspecialchars($editcaption) . '" /><br />';
+			echo '<label for="editminusers">Minimálně účastníků:</label> <input type="text" name="editminusers" id="editminusers" value="' . htmlspecialchars($editminusers) . '" /><br />';
+			echo '<label for="editmaxusers">Maximálně účastníků:</label> <input type="text" name="editmaxusers" id="editmaxusers" value="' . htmlspecialchars($editmaxusers) . '" /><br />';
+			echo '</div>';
 		}
-		echo '</select><br />';
-		echo '<label for="editcaption">Název:</label> <input type="text" name="editcaption" id="editcaption" value="' . htmlspecialchars($editcaption) . '" /><br />';
-		echo '<label for="editminusers">Minimálně účastníků:</label> <input type="text" name="editminusers" id="editminusers" value="' . htmlspecialchars($editminusers) . '" /><br />';
-		echo '<label for="editmaxusers">Maximálně účastníků:</label> <input type="text" name="editmaxusers" id="editmaxusers" value="' . htmlspecialchars($editmaxusers) . '" /><br />';
-		echo '</div>';
 
 		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=t.id)");
 		if (mysql_num_rows($query))

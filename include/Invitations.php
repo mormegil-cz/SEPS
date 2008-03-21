@@ -2,6 +2,66 @@
 
 require_once('./include/Logging.php');
 
+function sendInvitationTo($email, $project, $projectname)
+{
+    global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail;
+
+	if (!$email || !$sepsAdminMail) return false;
+
+	$code = '';
+	for($i = 0; $i < sepsEmailCodeLength; $i++)
+	{
+		$code .= chr(ord('A') + mt_rand(0, 25));
+	}
+	$invitationuri = $sepsFullBaseUri . '?inv=' . $code;
+
+	$projectOrNull = $project ? $project : "NULL";
+	$date = strftime('%Y-%m-%d %H:%M:%S');
+	if (!mysql_query("INSERT INTO emailcodes (email, code, fromuser, createdate, forproject) VALUES ('" . mysql_real_escape_string($email) . "', '" . mysql_real_escape_string($code) . "' , $sepsLoggedUser, '$date', $projectOrNull)") || !mysql_affected_rows())
+	{
+		echo '<div class="errmsg">MySQL error: ' . mysql_error() . '</div>';
+		return false;
+	}
+
+	if ($project)
+	{
+		$subj = encodeMailHeader("Pozvánka do projektu $projectname");
+		$replyTo = $sepsLoggedUserEmail;
+		$mailtext = <<<EOT
+Dobrý den,
+
+uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname
+v plánovacím systému $sepsTitle. Pokud chcete tuto pozvánku přijmout,
+klikněte na následující odkaz a pokračujte podle tam uvedených pokynů:
+   $invitationuri
+
+Pokud pozvánku přijmout nechcete, můžete tuto zprávu ignorovat.
+
+Hezký den!
+EOT;
+	}
+	else
+	{
+		$subj = encodeMailHeader("Ověření e-mailové adresy v systému $sepsTitle");
+		$replyTo = $sepsAdminMail;
+		$mailtext = <<<EOT
+Dobrý den,
+
+v systému $sepsTitle někdo nastavil uživatelskému účtu $sepsLoggedUsername
+tuto e-mailovou adresu. Pokud jste tímto uživatelem vy a chcete tuto změnu
+schválit, klikněte na následující odkaz:
+   $invitationuri
+
+Pokud tímto uživatelem nejste, na výše uvedený odkaz neklikejte, tuto
+zprávu můžete ignorovat.
+
+Hezký den!
+EOT;
+	}
+
+	return mail($email, $subj, $mailtext, "From: $sepsAdminMail\r\nReply-To: $replyTo\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion());
+}
+
 function invitationForm()
 {
 	global $sepsLoggedUser, $sepsLoggedUserEmail;
@@ -33,7 +93,7 @@ function invitationForm()
 
 function sendInvitation()
 {
-	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserEmail, $sepsTitle, $sepsAdminMail, $sepsFullBaseUri, $sepsSoftwareVersionLine, $sepsDefaultInvitationAccess;
+	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserEmail, $sepsDefaultInvitationAccess;
 
 	$email = getVariableOrNull('email');
 	$project = getVariableOrNull('project');
@@ -53,44 +113,39 @@ function sendInvitation()
 		return;
 	}
 
-	$code = '';
-	for($i = 0; $i < sepsEmailCodeLength; $i++)
-	{
-		$code .= chr(ord('A') + mt_rand(0, 25));
-	}
-	$invitationuri = $sepsFullBaseUri . '?inv=' . $code;
-
-	$date = strftime('%Y-%m-%d %H:%M:%S');
-	if (!mysql_query("INSERT INTO emailcodes (email, code, fromuser, createdate, forproject) VALUES ('" . mysql_real_escape_string($email) . "', '" . mysql_real_escape_string($code) . "' , $sepsLoggedUser, '$date', $project)"))
-	{
-		echo '<div class="errmsg">Chyba při odesílání pozvánky. Zkuste to později.</div>';
-		return;
-	}
-
-	if (mail($email, encodeMailHeader("Pozvánka do projektu $projectname"), <<<EOT
-Dobrý den,
-
-uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname
-v plánovacím systému $sepsTitle. Pokud chcete tuto pozvánku přijmout,
-klikněte na následující odkaz a pokračujte podle tam uvedených pokynů:
-   $invitationuri
-
-Pokud pozvánku přijmout nechcete, můžete tuto zprávu ignorovat.
-
-Hezký den!
-EOT
-		, "From: $sepsAdminMail\r\nReply-To: $sepsLoggedUserEmail\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion()))
+	if (sendInvitationTo($email, $project, $projectname))
 	{
 		echo '<div class="infomsg">Pozvánka odeslána</div>';
 		logMessage("Uživatel $sepsLoggedUserCaption poslal pozvánku do projektu $projectname na $email; kód: $code");
 	}
 	else
 	{
-		echo '<div class="errmsg">Nepodařilo se odeslat e-mail.</div>';
+		echo '<div class="errmsg">Chyba při odesílání pozvánky. Zkuste to později.</div>';
 	}
 }
 
 function receivedInvitation($invitationCode, $errormessage = null)
+{
+	$query = mysql_query(
+		"SELECT c.createdate, c.forproject, u.caption AS user
+		FROM emailcodes c
+		INNER JOIN users u ON c.fromuser=u.id
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0");
+
+	$basicInvitationData = mysql_fetch_assoc($query);
+	if (!$basicInvitationData || $basicInvitationData['forproject'])
+	{
+		receivedProjectInvitation($invitationCode, $errormessage);
+		return false;
+	}
+	else
+	{
+		receivedEmailConfirmation($invitationCode);
+		return true;
+	}
+}
+
+function receivedProjectInvitation($invitationCode, $errormessage)
 {
     global $sepsFullBaseUri;
 
@@ -104,8 +159,8 @@ function receivedInvitation($invitationCode, $errormessage = null)
 	$data = mysql_fetch_assoc($query);
 	if (!$data)
 	{
-		echo '<h2>Neplatná pozvánka</h2>';
-		echo '<div class="errmsg">Tento odkaz nevede na žádnou platnou pozvánku. Možná již byla použita nebo její platnost vypršela.</div>';
+		echo '<h2>Neplatný kód</h2>';
+		echo '<div class="errmsg">Tento odkaz již není platný. Možná již byla pozvánka použita nebo její platnost vypršela.</div>';
 		echo '<div>Pokud se chcete přihlásit, pokračujte na <a href="' . htmlspecialchars($sepsFullBaseUri) . '">hlavní stranu</a>.</div>';
 		return;
 	}
@@ -128,7 +183,7 @@ function receivedInvitation($invitationCode, $errormessage = null)
 	echo '<h3>Základní údaje</h3>';
 	echo '<small class="formhelp">Pokud zde dosud nemáte založen účet, zvolte si přihlašovací jméno a heslo. Pokud již na tomto serveru účet máte, zadejte své existující jméno a heslo (stačí jednou).</small>';
 	echo '<div class="formblock">';
-	echo '<label for="username">Jméno:</label> <input class="required" type="text" name="username" id="username" /><br />';
+	echo '<label for="username">Jméno:</label> <input class="required" type="text" name="username" id="username" maxlength="100" /><br />';
 	echo '<label for="password">Heslo:</label> <input class="required" type="password" name="password" id="password" /><br />';
 	echo '<label for="password2">Heslo znovu:</label> <input type="password" name="password2" id="password2" /><br />';
 	echo '</div>';
@@ -136,14 +191,57 @@ function receivedInvitation($invitationCode, $errormessage = null)
 	echo '<h3>Další informace</h3>';
 	echo '<small class="formhelp">Tyto údaje jsou nepovinné, pouze tím ostatním umožníte dovědět se o vás něco víc.</small>';
 	echo '<div class="formblock">';
-	echo '<label for="firstname">Křestní jméno:</label> <input type="text" name="firstname" id="firstname" /><br />';
-	echo '<label for="lastname">Příjmení:</label> <input type="text" name="lastname" id="lastname" /><br />';
-	echo '<label for="caption">Jak uvádět vaše jméno:</label> <input type="text" name="caption" id="caption" /><br />';
-	echo '<label for="icq">ICQ:</label> <input type="text" name="icq" id="icq" /><br />';
+	echo '<label for="firstname">Křestní jméno:</label> <input type="text" name="firstname" id="firstname" maxlength="50" /><br />';
+	echo '<label for="lastname">Příjmení:</label> <input type="text" name="lastname" id="lastname" maxlength="50" /><br />';
+	echo '<label for="caption">Jak uvádět vaše jméno:</label> <input type="text" name="caption" id="caption" maxlength="100" /><br />';
+	echo '<label for="icq">ICQ:</label> <input type="text" name="icq" id="icq" maxlength="12" /><br />';
 	echo '</div>';
 
 	echo '<input type="submit" value="Odeslat" />';
 	echo '</div>';
+}
+
+function receivedEmailConfirmation($invitationCode)
+{
+	$query = mysql_query(
+		"SELECT c.createdate, u.caption, u.email, u.id, u.emailvalidated
+		FROM emailcodes c
+		INNER JOIN users u ON c.fromuser=u.id
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0");
+	$data = mysql_fetch_assoc($query);
+	if (!$data)
+	{
+		echo '<h2>Neplatný kód</h2>';
+		echo '<div class="errmsg">Tento odkaz již není platný.</div>';
+		echo '<div>Pokud se chcete přihlásit, pokračujte na <a href="' . htmlspecialchars($sepsFullBaseUri) . '">hlavní stranu</a>.</div>';
+		return;
+	}
+
+	$userid = $data['id'];
+
+	if (!$data['emailvalidated'])
+	{
+		// zvalidovat e-mail
+		if (mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid") && (mysql_affected_rows() > 0))
+		{
+			echo '<div class="infomsg">Váš e-mail byl úspěšně ověřen.</div>';
+		}
+		else
+		{
+			echo '<div class="errmsg">Chyba při ověřování e-mailu, zkuste to později</div>';
+			return;
+		}
+	}
+
+	invalidateAllEmailConfirmationsForUser($userid);
+}
+
+function invalidateAllEmailConfirmationsForUser($user)
+{
+	return mysql_query(
+		"UPDATE emailcodes c
+			SET c.accepted=1
+			WHERE c.fromuser=$user AND c.accepted=0 AND c.forproject IS NULL");
 }
 
 function acceptedInvitation()

@@ -15,8 +15,7 @@ function mainPageContents()
 	$invitation = getVariableOrNull('inv');
 	if ($invitation)
 	{
-		receivedInvitation($invitation);
-		return;
+		if (!receivedInvitation($invitation)) return;
 	}
 
 	if ($action == 'acceptedinvitation')
@@ -37,6 +36,7 @@ function mainPageContents()
 	}
 
 	$sepsLoggedUserCaption = null;
+	$sepsLoggedUsername = null;
 	$sepsLoggedUserMaxAccess = 0;
 	loadLoggedUserInformation();
 
@@ -56,13 +56,13 @@ function mainPageContents()
 	{
 		require_once('./include/Events.php');
 		require_once('./include/News.php');
-        require_once('./include/UserSettings.php');
+		require_once('./include/UserSettings.php');
 
-        if ($sepsadminEnable)
-        {
-            include('./include/Administration.php');
-            globalAdministration();
-        }
+		if ($sepsadminEnable)
+		{
+			include('./include/Administration.php');
+			globalAdministration();
+		}
 
 		if ($action == 'createevent')
 		{
@@ -75,10 +75,14 @@ function mainPageContents()
 		{
 			sendInvitation();
 		}
+		else if ($action == 'sendemailconfirmation')
+		{
+			sendVerificationEmail();
+		}
 		else if ($action == 'savesettings')
-        {
-            saveUserSettings();
-        }
+		{
+			saveUserSettings();
+		}
 
 		printNews();
 
@@ -120,10 +124,10 @@ function mainPageContents()
 			require_once('./include/EventTypes.php');
 			eventTypesForm();
 		}
-        else if ($action == 'settings')
-        {
-            userSettingsForm();
-        }
+		else if ($action == 'settings')
+		{
+			userSettingsForm();
+		}
 		else if ($action == 'viewlog')
 		{
 			require_once('./include/Logging.php');
@@ -142,18 +146,18 @@ function mainPageContents()
 		$menu[] = array('?action=logout', 'Odhlásit se');
 	}
 
-	echo '    </div>';
+	echo '	</div>';
 
 	if ($menu)
 	{
-		echo '    <div id="menu">';
+		echo '	<div id="menu">';
 		echo '<p class="loggedin">Uživatel: ' . htmlspecialchars($sepsLoggedUserCaption) . '</p>';
 		echo '<ul>';
 		foreach($menu as $item)
 		{
 			echo "<li><a href='$item[0]'>$item[1]</a></li>";
 		}
-		echo '    </ul></div>';
+		echo '	</ul></div>';
 	}
 }
 
@@ -176,11 +180,11 @@ echo <<<EOT
  <body>
 
   <div id='header'>
-    <a href='?'><img id='sitelogo' src='$sepsSiteLogo' width='100' height='100' alt='' /></a>
+	<a href='?'><img id='sitelogo' src='$sepsSiteLogo' width='100' height='100' alt='' /></a>
 	<h1 id='sitecaption'>$sepsTitle</h1>
   </div>
   <div id='page'>
-    <div id='contents'>
+	<div id='contents'>
 EOT;
 
 	mainPageContents();

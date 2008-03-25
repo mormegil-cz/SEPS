@@ -10,6 +10,7 @@ function displayUserSettingsForm($username, $usercaption, $firstname, $lastname,
 	echo '<input type="hidden" name="currlastname" value="' . htmlspecialchars($currLastname) . '" />';
 	echo '<input type="hidden" name="curremail" value="' . htmlspecialchars($currEmail) . '" />';
 	echo '<input type="hidden" name="curricq" value="' . htmlspecialchars($currIcq) . '" />';
+	echo '<input type="hidden" name="curremailvalidated" value="' . $emailvalidated . '" />';
 	echo '<label for="username">Uživatelské jméno:</label> <input type="text" id="username" name="username" value="' . htmlspecialchars($username) . '" maxlength="100" /><br />';
 	echo '<label for="usercaption">Jak uvádět moje jméno:</label> <input type="text" id="usercaption" name="usercaption" value="' . htmlspecialchars($usercaption) . '" maxlength="100" /><br />';
 	echo '<label for="firstname">Jméno:</label> <input type="text" id="firstname" name="firstname" value="' . htmlspecialchars($firstname) . '" maxlength="50" /><br />';
@@ -79,6 +80,7 @@ function saveUserSettings()
 	$currLastname = getVariableOrNull('currlastname');
 	$currEmail = getVariableOrNull('curremail');
 	$currIcq = getVariableOrNull('curricq');
+	$emailvalidated = getVariableOrNull('curremailvalidated');
 	$oldpassword = getVariableOrNull('oldpassword');
 	$newpassword = getVariableOrNull('newpassword');
 	$newpassword2 = getVariableOrNull('newpassword2');
@@ -86,25 +88,25 @@ function saveUserSettings()
 	if (!$username)
 	{
 		echo '<div class="errmsg">Uživatelské jméno nemůže být prázdné</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 		return;
 	}
 	if (!$usercaption)
 	{
 		echo '<div class="errmsg">Musíte vyplnit, jak máte být uváděni</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 		return;
 	}
 	if ($email && !preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $email))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako e-mail</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 		return;
 	}
 	if ($icq && !preg_match('/^[0-9 -]+$/', $icq))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako ICQ</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 		return;
 	}
 
@@ -112,7 +114,7 @@ function saveUserSettings()
 	if (mysql_fetch_row($queryCheck))
 	{
 		echo '<div class="errmsg">Vaše nové uživatelské jméno už se používá, zkuste jiné</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 		return;
 	}
 
@@ -121,21 +123,21 @@ function saveUserSettings()
 		if ($newpassword != $newpassword2)
 		{
 			echo '<div class="errmsg">Opakované nové heslo nesouhlasí</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 			return;
 		}
 
 		if ($oldpassword == $newpassword)
 		{
 			echo '<div class="errmsg">Nové heslo je stejné jako to stávající</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 			return;
 		}
 
 		if (!tryLogin($currUsername, $oldpassword))
 		{
 			echo '<div class="errmsg">Stávající heslo nesouhlasí</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
 			return;
 		}
 	}

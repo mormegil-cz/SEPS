@@ -59,7 +59,9 @@ Hezký den!
 EOT;
 	}
 
-	return mail($email, $subj, $mailtext, "From: $sepsAdminMail\r\nReply-To: $replyTo\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion());
+	if (!mail($email, $subj, $mailtext, "From: $sepsAdminMail\r\nReply-To: $replyTo\r\nContent-type: text/plain; charset=utf-8\r\nX-Mailer: $sepsSoftwareVersionLine PHP/" . phpversion())) return false;
+
+	return $code;
 }
 
 function invitationForm()
@@ -113,7 +115,8 @@ function sendInvitation()
 		return;
 	}
 
-	if (sendInvitationTo($email, $project, $projectname))
+	$code = sendInvitationTo($email, $project, $projectname);
+	if ($code)
 	{
 		echo '<div class="infomsg">Pozvánka odeslána</div>';
 		logMessage("Uživatel $sepsLoggedUserCaption poslal pozvánku do projektu $projectname na $email; kód: $code");

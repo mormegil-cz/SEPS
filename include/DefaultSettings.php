@@ -11,6 +11,8 @@ $sepsFavicon = null;
 
 $sepsCalendarWeeks = 4;
 $sepsShowIcqStatus = true;
+$sepsShowSkypeStatus = true;
+$sepsShowJabberStatus = true;
 $sepsDefaultInvitationAccess = sepsAccessFlagsCanSee | sepsAccessFlagsHasAccess | sepsAccessFlagsCanSeeContacts | sepsAccessFlagsCanInvite;
 $sepsPasswordHashingAlgorithm = 'sha256';
 

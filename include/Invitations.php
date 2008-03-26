@@ -267,9 +267,10 @@ function acceptedInvitation()
 	}
 
 	$invitationQuery = mysql_query(
-		"SELECT c.id, c.fromuser, c.email, up.access, c.forproject
+		"SELECT c.id, c.fromuser, c.email, up.access, c.forproject, p.invitationaccessmask
 		FROM emailcodes c
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
+		INNER JOIN projects p ON c.forproject=p.id
 		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
 	$invitation = mysql_fetch_assoc($invitationQuery);
 	if (!$invitation)
@@ -277,6 +278,8 @@ function acceptedInvitation()
 		receivedInvitation($invitationCode, 'Tato pozvánka není platná.');
 		return FALSE;
 	}
+
+	$projectAccessMask = ~$invitation['invitationaccessmask'];
 
 	$userquery = mysql_query("SELECT u.id FROM users u WHERE u.username = '" . mysql_real_escape_string($username) . "'");
 	$founduser = mysql_fetch_assoc($userquery);
@@ -293,7 +296,7 @@ function acceptedInvitation()
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
 		$userid = $founduser['id'];
-		$access = $invitation['access'] & $sepsDefaultInvitationAccess;
+		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
 		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
 
 		// nastavit příznak ověření e-mailu
@@ -342,7 +345,7 @@ function acceptedInvitation()
 
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
-		$access = $invitation['access'] & $sepsDefaultInvitationAccess;
+		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
 		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
 
 		// označit pozvánku jako použitou

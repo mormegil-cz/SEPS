@@ -1,6 +1,6 @@
 <?php
 
-function displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq)
+function displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype)
 {
 	echo '<div class="bottomform usersettings">';
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="savesettings" />';
@@ -9,14 +9,18 @@ function displayUserSettingsForm($username, $usercaption, $firstname, $lastname,
 	echo '<input type="hidden" name="currfirstname" value="' . htmlspecialchars($currFirstname) . '" />';
 	echo '<input type="hidden" name="currlastname" value="' . htmlspecialchars($currLastname) . '" />';
 	echo '<input type="hidden" name="curremail" value="' . htmlspecialchars($currEmail) . '" />';
+	echo '<input type="hidden" name="currjabber" value="' . htmlspecialchars($currJabber) . '" />';
 	echo '<input type="hidden" name="curricq" value="' . htmlspecialchars($currIcq) . '" />';
+	echo '<input type="hidden" name="currskype" value="' . htmlspecialchars($currSkype) . '" />';
 	echo '<input type="hidden" name="curremailvalidated" value="' . $emailvalidated . '" />';
 	echo '<label for="username">Uživatelské jméno:</label> <input type="text" id="username" name="username" value="' . htmlspecialchars($username) . '" maxlength="100" /><br />';
 	echo '<label for="usercaption">Jak uvádět moje jméno:</label> <input type="text" id="usercaption" name="usercaption" value="' . htmlspecialchars($usercaption) . '" maxlength="100" /><br />';
 	echo '<label for="firstname">Jméno:</label> <input type="text" id="firstname" name="firstname" value="' . htmlspecialchars($firstname) . '" maxlength="50" /><br />';
 	echo '<label for="lastname">Příjmení:</label> <input type="text" id="lastname" name="lastname" value="' . htmlspecialchars($lastname) . '" maxlength="50" /><br />';
 	echo '<label for="email">E-mail:</label> <input type="text" id="email" name="email" value="' . htmlspecialchars($email) . '" maxlength="100" /><br />';
+	echo '<label for="jabber">Jabber:</label> <input type="text" id="jabber" name="jabber" value="' . htmlspecialchars($jabber) . '" maxlength="100" /><br />';
 	echo '<label for="icq">ICQ:</label> <input type="text" id="icq" name="icq" value="' . htmlspecialchars($icq) . '" maxlength="12" /><br />';
+	echo '<label for="skype">Skype:</label> <input type="text" id="skype" name="skype" value="' . htmlspecialchars($skype) . '" maxlength="100" /><br />';
 
 	echo '<div class="formblock">';
 	echo '<h3>Změna hesla</h3>';
@@ -46,7 +50,7 @@ function userSettingsForm()
 {
 	global $sepsLoggedUser;
 
-	$query = mysql_query("SELECT username, caption, firstname, lastname, email, emailvalidated, icq FROM users WHERE id=$sepsLoggedUser");
+	$query = mysql_query("SELECT username, caption, firstname, lastname, email, emailvalidated, icq, jabber, skype FROM users WHERE id=$sepsLoggedUser");
 	$userData = mysql_fetch_assoc($query);
 	if (!$userData) return;
 
@@ -55,10 +59,12 @@ function userSettingsForm()
 	$firstname = $userData['firstname'];
 	$lastname = $userData['lastname'];
 	$email = $userData['email'];
-	$icq = $userData['icq'];
 	$emailvalidated = $userData['emailvalidated'];
+	$icq = $userData['icq'];
+	$jabber = $userData['jabber'];
+	$skype = $userData['skype'];
 
-	displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $username, $usercaption, $firstname, $lastname, $email, $emailvalidated, $icq);
+	displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $username, $usercaption, $firstname, $lastname, $email, $emailvalidated, $icq, $jabber, $skype);
 }
 
 function saveUserSettings()
@@ -74,12 +80,16 @@ function saveUserSettings()
 	$lastname = getVariableOrNull('lastname');
 	$email = getVariableOrNull('email');
 	$icq = getVariableOrNull('icq');
+	$jabber = getVariableOrNull('jabber');
+	$skype = getVariableOrNull('skype');
 	$currUsername = getVariableOrNull('currusername');
 	$currUsercaption = getVariableOrNull('currusercaption');
 	$currFirstname = getVariableOrNull('currfirstname');
 	$currLastname = getVariableOrNull('currlastname');
 	$currEmail = getVariableOrNull('curremail');
 	$currIcq = getVariableOrNull('curricq');
+	$currJabber = getVariableOrNull('currjabber');
+	$currSkype = getVariableOrNull('currskype');
 	$emailvalidated = getVariableOrNull('curremailvalidated');
 	$oldpassword = getVariableOrNull('oldpassword');
 	$newpassword = getVariableOrNull('newpassword');
@@ -88,25 +98,31 @@ function saveUserSettings()
 	if (!$username)
 	{
 		echo '<div class="errmsg">Uživatelské jméno nemůže být prázdné</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
 	if (!$usercaption)
 	{
 		echo '<div class="errmsg">Musíte vyplnit, jak máte být uváděni</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
 	if ($email && !preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $email))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako e-mail</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
 	if ($icq && !preg_match('/^[0-9 -]+$/', $icq))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako ICQ</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
+		return;
+	}
+	if ($jabber && !preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $jabber))
+	{
+		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako Jabber ID</div>';
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
 
@@ -114,7 +130,7 @@ function saveUserSettings()
 	if (mysql_fetch_row($queryCheck))
 	{
 		echo '<div class="errmsg">Vaše nové uživatelské jméno už se používá, zkuste jiné</div>';
-		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
 
@@ -123,21 +139,21 @@ function saveUserSettings()
 		if ($newpassword != $newpassword2)
 		{
 			echo '<div class="errmsg">Opakované nové heslo nesouhlasí</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 			return;
 		}
 
 		if ($oldpassword == $newpassword)
 		{
 			echo '<div class="errmsg">Nové heslo je stejné jako to stávající</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 			return;
 		}
 
 		if (!tryLogin($currUsername, $oldpassword))
 		{
 			echo '<div class="errmsg">Stávající heslo nesouhlasí</div>';
-			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq);
+			displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 			return;
 		}
 	}
@@ -149,6 +165,8 @@ function saveUserSettings()
 	if ($firstname != $currFirstname) $items['firstname'] = $firstname;
 	if ($lastname != $currLastname) $items['lastname'] = $lastname;
 	if ($icq != $currIcq) $items['icq'] = $icq;
+	if ($jabber != $currJabber) $items['jabber'] = $jabber;
+	if ($skype != $currSkype) $items['skype'] = $skype;
 	if ($email != $currEmail)
 	{
 		$items['email'] = $email;

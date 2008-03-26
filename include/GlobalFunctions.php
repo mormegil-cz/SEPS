@@ -13,6 +13,21 @@ function getVariableOrNull($varName)
 	return null;
 }
 
+function plural($value, $singular, $plural234, $plural)
+{
+	switch($value)
+	{
+		case 1:
+			return $singular;
+		case 2:
+		case 3:
+		case 4:
+			return $plural234;
+		default:
+			return $plural;
+	}
+}
+
 if (function_exists('imap_8bit'))
 {
 	function encodeMailHeader($string, $encoding='UTF-8')

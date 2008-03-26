@@ -67,6 +67,9 @@ function eventTypesForm()
 		$addmaxusers = getVariableOrNull('addmaxusers');
 		if (!is_numeric($addmaxusers)) $addmaxusers = null;
 		if ($addmaxusers <= 0) $addmaxusers = null;
+		$addmaxguests = getVariableOrNull('addmaxusers');
+		if (!is_numeric($addmaxguests)) $addmaxguests = null;
+		if ($addmaxguests <= 0) $addmaxguests = null;
 		$editcaption = getVariableOrNull('editcaption');
 		$editminusers = getVariableOrNull('editminusers');
 		if (!is_numeric($editminusers)) $editminusers = null;
@@ -74,6 +77,9 @@ function eventTypesForm()
 		$editmaxusers = getVariableOrNull('editmaxusers');
 		if (!is_numeric($editmaxusers)) $editmaxusers = null;
 		if ($editmaxusers <= 0) $editmaxusers = null;
+		$editmaxguests = getVariableOrNull('editmaxguests');
+		if (!is_numeric($editmaxguests)) $editmaxguests = null;
+		if ($editmaxguests <= 0) $editmaxguests = null;
 		$eventTypeAction = getVariableOrNull('eventtypeaction');
 
 		$editeventtype = getAndCheckEventType('editeventtype', $projectId);
@@ -84,7 +90,7 @@ function eventTypesForm()
 			case 'add':
 				if (!$addcaption || $addminusers < 0 || $addmaxusers <= 0)
 				{
-					echo '<div class="errmsg">Je potřeba vyplnit všechny tři položky</div>';
+					echo '<div class="errmsg">Je potřeba vyplnit název a limity na počet účastníků</div>';
 					break;
 				}
 				if ($addminusers > $addmaxusers)
@@ -92,10 +98,10 @@ function eventTypesForm()
 					echo '<div class="errmsg">Minimum nemůže být vyšší než maximum</div>';
 					break;
 				}
-				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId)"))
+				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, $addmaxguests)"))
 				{
 					echo '<div class="infomsg">Nový typ vytvořen</div>';
-					$addcaption = $addminusers = $addmaxusers = null;
+					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
 				}
 				break;
 			case 'edit':
@@ -128,6 +134,13 @@ function eventTypesForm()
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
+				if ($editmaxguests)
+				{
+					if (mysql_query("UPDATE eventtypes SET maxguests=$editmaxguests WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
+						$changes++;
+					else
+						echo '<div class="errmsg">Chyba při změně dovoleného počtu hostů</div>';
+				}
 				if ($changes)
 				{
 					echo '<div class="infomsg">Změny provedeny</div>';
@@ -159,6 +172,7 @@ function eventTypesForm()
 		echo '<label for="addcaption">Název:</label> <input type="text" name="addcaption" id="addcaption" value="' . htmlspecialchars($addcaption) . '" /><br />';
 		echo '<label for="addminusers">Minimálně účastníků:</label> <input type="text" name="addminusers" id="addminusers" value="' . htmlspecialchars($addminusers) . '" /><br />';
 		echo '<label for="addmaxusers">Maximálně účastníků:</label> <input type="text" name="addmaxusers" id="addmaxusers" value="' . htmlspecialchars($addmaxusers) . '" /><br />';
+		echo '<label for="addmaxguests">Max. hostů na účastníka:</label> <input type="text" name="addmaxguests" id="addmaxguests" value="' . htmlspecialchars($addmaxguests) . '" /><br />';
 		echo '</div>';
 
 		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId");
@@ -175,6 +189,7 @@ function eventTypesForm()
 			echo '<label for="editcaption">Název:</label> <input type="text" name="editcaption" id="editcaption" value="' . htmlspecialchars($editcaption) . '" /><br />';
 			echo '<label for="editminusers">Minimálně účastníků:</label> <input type="text" name="editminusers" id="editminusers" value="' . htmlspecialchars($editminusers) . '" /><br />';
 			echo '<label for="editmaxusers">Maximálně účastníků:</label> <input type="text" name="editmaxusers" id="editmaxusers" value="' . htmlspecialchars($editmaxusers) . '" /><br />';
+			echo '<label for="editmaxguests">Max. hostů na účastníka:</label> <input type="text" name="editmaxguests" id="editmaxguests" value="' . htmlspecialchars($editmaxguests) . '" /><br />';
 			echo '</div>';
 		}
 
@@ -200,11 +215,11 @@ function eventTypesForm()
 		echo '<div class="eventtypeslist"><table class="eventtypesoverview">';
 		echo '<thead><caption>Definované typy</caption></thead>';
 		echo '<tbody>';
-		echo '<tr><th>Název</th><th>Min</th><th>Max</th></tr>';
-		$query = mysql_query("SELECT t.title, t.minpeople, t.capacity FROM eventtypes t WHERE t.project=$projectId");
+		echo '<tr><th>Název</th><th>Min</th><th>Max</th><th>Hostů</th></tr>';
+		$query = mysql_query("SELECT t.title, t.minpeople, t.capacity, t.maxguests FROM eventtypes t WHERE t.project=$projectId");
 		while ($row = mysql_fetch_assoc($query))
 		{
-			echo '<tr><td>' . htmlspecialchars($row['title']) . "</td><td>$row[minpeople]</td><td>$row[capacity]</td></tr>";
+			echo '<tr><td>' . htmlspecialchars($row['title']) . "</td><td>$row[minpeople]</td><td>$row[capacity]</td><td>$row[maxguests]</td></tr>";
 		}
 		echo '</tbody>';
 		echo '</table></div>';

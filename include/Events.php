@@ -6,30 +6,56 @@ class Subscriber
 	var $m_UserCaption;
 	var $m_UserEmail;
 	var $m_UserIcq;
+	var $m_UserSkype;
+	var $m_UserJabber;
 	var $m_Priority;
+	var $m_Guests;
 
-	function __construct($userID, $userCaption, $userEmail, $userIcq, $priority)
+	function __construct($userID, $userCaption, $userEmail, $userIcq, $userSkype, $userJabber, $priority, $guests)
 	{
 		$this->m_UserID = $userID;
 		$this->m_UserCaption = $userCaption;
 		$this->m_UserEmail = $userEmail;
 		$this->m_UserIcq = $userIcq;
+		$this->m_UserSkype = $userSkype;
+		$this->m_UserJabber = $userJabber;
 		$this->m_Priority = $priority;
+		$this->m_Guests = $guests;
 	}
 
 	function getUserLine($withContacts)
 	{
-		global $sepsShowIcqStatus;
+		global $sepsLoggedUser, $sepsShowIcqStatus, $sepsShowSkypeStatus, $sepsShowJabberStatus;
 
 		$result = htmlspecialchars($this->m_UserCaption);
-		if ($withContacts)
+		if ($this->m_UserID == $sepsLoggedUser)
 		{
-			if ($this->m_UserEmail) $result .= ' <a class="usermail" href="mailto:' . htmlspecialchars($this->m_UserEmail) . '"><img src="img/mail.png" width="20" height="15" alt="Poslat e-mail" /></a>';
-			if ($sepsShowIcqStatus && $this->m_UserIcq)
+		}
+		else
+		{
+			if ($this->m_Guests)
 			{
-				$icq = ereg_replace('[^0-9]', '', $this->m_UserIcq);
-				$alt = htmlspecialchars($this->m_UserIcq);
-				$result .= ' <span class="usericq"><img src="http://wwp.icq.com/scripts/online.dll?icq=' . htmlspecialchars($icq) . '&amp;img=5" width="18" height="18" alt="' . $alt . '" title = "' . $alt . '" /></span>';
+				$result .= ' + <span class="guests">' . $this->m_Guests . ' ' . plural($this->m_Guests, 'host', 'hosté', 'hostů') . "</span>";
+			}
+			if ($withContacts)
+			{
+				if ($this->m_UserEmail) $result .= ' <a class="usermail" href="mailto:' . htmlspecialchars($this->m_UserEmail) . '"><img src="img/mail.png" width="20" height="15" alt="Poslat e-mail" /></a>';
+				if ($sepsShowJabberStatus && $this->m_UserJabber)
+				{
+					$jabber = htmlspecialchars($this->m_UserJabber);
+					$result .= ' <a class="userjabber" href="xmpp:' . $jabber. '"><img src="http://netlab.cz/status/?jid=' . $jabber . '&ib=bulb" width="16" height="16" alt="Jabber: ' . $jabber . '" title = "' . $jabber . '" /></a>';
+				}
+				if ($sepsShowIcqStatus && $this->m_UserIcq)
+				{
+					$icq = ereg_replace('[^0-9]', '', $this->m_UserIcq);
+					$alt = htmlspecialchars($this->m_UserIcq);
+					$result .= ' <span class="usericq"><img src="http://wwp.icq.com/scripts/online.dll?icq=' . htmlspecialchars($icq) . '&amp;img=5" width="18" height="18" alt="ICQ: ' . $alt . '" title = "' . $alt . '" /></span>';
+				}
+				if ($sepsShowSkypeStatus && $this->m_UserSkype)
+				{
+					$skype = htmlspecialchars($this->m_UserSkype);
+					$result .= ' <a class="userskype" href="skype:' . $skype . '"><img src="http://mystatus.skype.com/smallicon/' . $skype . '" width="16" height="16" alt="Skype: ' . $skype . '" title = "' . $skype . '" /></a>';
+				}
 			}
 		}
 		return $result;
@@ -44,6 +70,11 @@ class Subscriber
 	{
 		return $this->m_Priority;
 	}
+
+	function getGuests()
+	{
+		return $this->m_Guests;
+	}
 }
 
 class Event
@@ -54,8 +85,9 @@ class Event
 	var $m_SubscriberCount;
 	var $m_MinSubscribers;
 	var $m_Capacity;
+	var $m_MaxGuests;
 
-	function __construct($id, $title, $date, $subscriberCount, $minSubscribers, $capacity)
+	function __construct($id, $title, $date, $subscriberCount, $minSubscribers, $capacity, $maxGuests)
 	{
 		$this->m_ID = $id;
 		$this->m_Title = $title;
@@ -63,12 +95,13 @@ class Event
 		$this->m_SubscriberCount = $subscriberCount;
 		$this->m_MinSubscribers = $minSubscribers;
 		$this->m_Capacity = $capacity;
+		$this->m_MaxGuests = $maxGuests;
 	}
 
 	public static function Load($id)
 	{
 		if (!is_numeric($id)) return null;
-		$query = mysql_query("SELECT e.title, e.date, t.minpeople, t.capacity FROM events e INNER JOIN eventtypes t ON e.eventtype=t.id WHERE e.id=$id");
+		$query = mysql_query("SELECT e.title, e.date, t.minpeople, t.capacity, t.maxguests FROM events e INNER JOIN eventtypes t ON e.eventtype=t.id WHERE e.id=$id");
 		if (!$query) return null;
 		$row = mysql_fetch_assoc($query);
 		if (!$row) return null;
@@ -77,12 +110,13 @@ class Event
 		$eventDate = strtotime($row['date']);
 		$eventMinSubscribers = $row['minpeople'];
 		$eventCapacity = $row['capacity'];
+		$maxGuests = $row['maxguests'];
 
-		$query = mysql_query("SELECT COUNT(*) FROM subscriptions WHERE event=$id");
+		$query = mysql_query("SELECT COUNT(*), SUM(guests) FROM subscriptions WHERE event=$id");
 		$subscriptionCountRow = mysql_fetch_row($query);
-		$eventSubscriberCount = $subscriptionCountRow[0];
+		$eventSubscriberCount = $subscriptionCountRow[0] + $subscriptionCountRow[1];
 
-		return new Event($id, $eventTitle, $eventDate, $eventSubscriberCount, $eventMinSubscribers, $eventCapacity);
+		return new Event($id, $eventTitle, $eventDate, $eventSubscriberCount, $eventMinSubscribers, $eventCapacity, $maxGuests);
 	}
 
 	function getId()
@@ -110,6 +144,11 @@ class Event
 		return $this->m_Capacity;
 	}
 
+	function getMaxGuests()
+	{
+		return $this->m_MaxGuests;
+	}
+
 	function isFilled()
 	{
 		return $this->m_SubscriberCount >= $this->m_MinSubscribers;
@@ -129,7 +168,7 @@ class Event
 	{
 		$eid = $this->m_ID;
 		$query = mysql_query(
-			"SELECT u.id, u.caption, u.email, u.icq, (up.priority+s.priority) AS priority
+			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, (up.priority+s.priority) AS priority, s.guests
 			FROM subscriptions s
 			INNER JOIN users u ON s.user=u.id
 			INNER JOIN events e ON s.event=e.id
@@ -141,7 +180,7 @@ class Event
 		$result = array();
 		while ($row = mysql_fetch_assoc($query))
 		{
-			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['priority']);
+			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], $row['priority'], $row['guests']);
 		}
 		return $result;
 	}
@@ -172,8 +211,8 @@ function findEvents($date)
 	global $sepsLoggedUser;
 
 	$query = mysql_query(
-		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, up.access,
-				(SELECT COUNT(*) FROM subscriptions s WHERE s.event=e.id) AS subscribercount
+		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests, up.access,
+				(SELECT COUNT(*) + SUM(guests) FROM subscriptions s WHERE s.event=e.id) AS subscribercount
 		FROM events e
 		INNER JOIN eventtypes t ON e.eventtype=t.id
 		INNER JOIN projects p ON t.project=p.id
@@ -184,7 +223,7 @@ function findEvents($date)
 	$result = array();
 	while ($row = mysql_fetch_assoc($query))
 	{
-		$result[] = new Event($row['id'], $row['title'], $row['date'], $row['subscribercount'], $row['minpeople'], $row['capacity']);
+		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
 	}
 	return $result;
 }
@@ -193,7 +232,8 @@ function printEventsCalendar($showSelectedDate)
 {
 	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess;
 
-	echo '<div class="calendar"><table class="calendar"><thead><caption>Plánované akce</caption></thead><tbody>';
+	// NOTE: align="left" is a workaround for Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=14984
+	echo '<div class="calendar"><table class="calendar"><caption>Plánované akce</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
 
 	$today = mktime();
@@ -242,7 +282,7 @@ function printEventsCalendar($showSelectedDate)
 		echo '</tr>';
 	}
 
-	echo '</tbody></table>';
+	echo '</table>';
 	$prevdate = strftime($startDate - 7 * 86400);
 	$nextdate = strftime($startDate + 7 * 86400);
 	echo "<div class='linkprev'><a href='?date=$prevdate'>&uarr; Předchozí</a></div><div class='linknext'><a href='?date=$nextdate'>Následující &darr;</a></div>";
@@ -273,16 +313,42 @@ function printEventDetails($eid)
 	$eventSubscriberWithPriorityCount = 0;
 	if ($eventSubscriberCount > 0)
 	{
+		$maxguests = $event->getMaxGuests();
+
 		$subscriberIdx = 0;
+		$subscribedWithGuests = 0;
 		echo '<ul class="subscribers">';
 		foreach($event->getListOfSubscribers() as $subscriber)
 		{
 			$priority = $subscriber->getPriority();
+			$guests = $subscriber->getGuests();
+			$subscribedWithGuests += 1 + $guests;
 			$subscriberIdx++;
-			$subscriberClass = $subscriberIdx > $eventCapacity ? "subscriber-over" : "subscriber-ok";
-			if (!$isSubscribed && $subscriber->getUserID() == $sepsLoggedUser) $isSubscribed = true;
+			$subscriberClass = $subscribedWithGuests > $eventCapacity ? "subscriber-over" : "subscriber-ok";
+			$thisIsCurrentUser = false;
+			if (!$isSubscribed && $subscriber->getUserID() == $sepsLoggedUser)
+			{
+				$thisIsCurrentUser = true;
+				$isSubscribed = true;
+			}
 			elseif ($priority >= $userPriority) $eventSubscriberWithPriorityCount++;
-			echo "<li class='priority-$priority $subscriberClass'>" . $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts) . '</li>';
+			echo "<li class='priority-$priority $subscriberClass'>";
+
+			if ($thisIsCurrentUser && $maxguests)
+			{
+				echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' /><input type='hidden' name='action' value='changeguests' />";
+			}
+
+			echo $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts);
+
+			if ($thisIsCurrentUser && $maxguests)
+			{
+				echo " +<input class='guests' name='guestcount' id='guestcount' value='$guests' onchange='javascript:this.form.submit()' /> " . plural($guests, 'host', 'hosté', 'hostů');
+				echo " <input type='submit' value='Uložit' id='guestcountsubmit' />";
+				echo '<script type="text/javascript">document.getElementById("guestcountsubmit").style.display = "none";</script></form>';
+			}
+
+			echo '</li>';
 		}
 		echo '</ul>';
 	}
@@ -440,4 +506,34 @@ function deleteEvent($eid)
 	{
 		echo '<div class="errmsg">Nelze smazat událost</div>';
 	}
+}
+
+function changeGuestCount($eid, $guestcount)
+{
+	global $sepsLoggedUser;
+
+	$event = Event::Load($eid);
+	if (!$event) return;
+
+	// TODO: check date
+	// if ($event->getDate();
+
+	$access = $event->getUserAccess($sepsLoggedUser);
+	if (!($access & sepsAccessFlagsHasAccess))
+	{
+		return;
+	}
+
+	$query = mysql_query("SELECT user, event FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	if (!mysql_fetch_row($query))
+	{
+		return;
+	}
+
+	$guestcount = intval($guestcount);
+	$maxguests = $event->getMaxGuests();
+	if ($guestcount > $maxguests) $guestcount = $maxguests;
+	if ($guestcount < 0) $guestcount = 0;
+
+	mysql_query("UPDATE subscriptions SET guests=$guestcount WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
 }

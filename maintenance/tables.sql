@@ -1,6 +1,7 @@
 CREATE TABLE projects (
   id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
   title VARCHAR(100) NOT NULL DEFAULT '',
+  invitationaccessmask INTEGER UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -9,6 +10,7 @@ CREATE TABLE eventtypes (
   title VARCHAR(100) NOT NULL DEFAULT '',
   capacity INTEGER UNSIGNED NOT NULL,
   minpeople INTEGER UNSIGNED NOT NULL DEFAULT 0,
+  maxguests INTEGER UNSIGNED NOT NULL DEFAULT 0,
   project INTEGER UNSIGNED NOT NULL,
   PRIMARY KEY (id),
   CONSTRAINT FK_eventtypes_projects FOREIGN KEY FK_eventtypes_projects (project) REFERENCES projects (id),
@@ -33,7 +35,9 @@ CREATE TABLE users (
   lastname VARCHAR(50) NOT NULL DEFAULT '',
   priority SMALLINT NOT NULL DEFAULT 0,
   email VARCHAR(100) NOT NULL DEFAULT '',
+  jabber VARCHAR(100) NOT NULL DEFAULT '',
   icq VARCHAR(12) NOT NULL DEFAULT '',
+  skype VARCHAR(100) NOT NULL DEFAULT '',
   emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username)

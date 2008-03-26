@@ -89,6 +89,9 @@ td.number
 div.calendar
 {
 	width: 30em;
+	/* Workaround for a Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=14984 */
+	float: left;
+	_float: none;
 }
 
 caption
@@ -251,6 +254,21 @@ div.eventdetail li.priority-10
 	color: #300;
 }
 
+div.eventdetail li.subscriber-over span.guests
+{
+	color: red;
+}
+
+div.eventdetail form
+{
+	margin: 0;
+}
+
+div.eventdetail input.guests
+{
+	width: 2em;
+}
+
 p.nosubscribers
 {
 	font-style: italic;
@@ -259,6 +277,7 @@ p.nosubscribers
 
 div.bottomform
 {
+	clear: both;
 	margin: 1em 0;
 	border-top: 1px solid black;
 }

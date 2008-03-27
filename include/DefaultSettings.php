@@ -10,6 +10,7 @@ $sepsSiteLogo = 'img/defaultlogo.png';
 $sepsFavicon = null;
 
 $sepsCalendarWeeks = 4;
+$sepsShowEmail = true;
 $sepsShowIcqStatus = true;
 $sepsShowSkypeStatus = true;
 $sepsShowJabberStatus = true;
@@ -18,5 +19,5 @@ $sepsPasswordHashingAlgorithm = 'sha256';
 
 $sepsadminEnable = false;
 
-$sepsDescriptionParser = htmlspecialchars;
+$sepsDescriptionParser = 'htmlspecialchars';
 $sepsDescriptionParserHelp = null;

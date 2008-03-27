@@ -25,7 +25,7 @@ class Subscriber
 
 	function getUserLine($withContacts)
 	{
-		global $sepsLoggedUser, $sepsShowIcqStatus, $sepsShowSkypeStatus, $sepsShowJabberStatus;
+		global $sepsLoggedUser, $sepsShowEmail, $sepsShowIcqStatus, $sepsShowSkypeStatus, $sepsShowJabberStatus;
 
 		$result = htmlspecialchars($this->m_UserCaption);
 		if ($this->m_UserID == $sepsLoggedUser)
@@ -39,22 +39,26 @@ class Subscriber
 			}
 			if ($withContacts)
 			{
-				if ($this->m_UserEmail) $result .= ' <a class="usermail" href="mailto:' . htmlspecialchars($this->m_UserEmail) . '"><img src="img/mail.png" width="20" height="15" alt="Poslat e-mail" /></a>';
+				if ($sepsShowEmail && $this->m_UserEmail)
+				{
+					$mail = htmlspecialchars($this->m_UserEmail);
+					$result .= " <a class='usermail' href='mailto:$mail'><img src='img/mail.png' width='20' height='15' alt='Poslat e-mail na $mail' /></a>";
+				}
 				if ($sepsShowJabberStatus && $this->m_UserJabber)
 				{
 					$jabber = htmlspecialchars($this->m_UserJabber);
-					$result .= ' <a class="userjabber" href="xmpp:' . $jabber. '"><img src="http://netlab.cz/status/?jid=' . $jabber . '&ib=bulb" width="16" height="16" alt="Jabber: ' . $jabber . '" title = "' . $jabber . '" /></a>';
+					$result .= " <a class='userjabber' href='xmpp:$jabber'><img src='http://netlab.cz/status/?jid=$jabber&amp;ib=bulb' width='16' height='16' alt='Jabber: $jabber' title='$jabber' /></a>";
 				}
 				if ($sepsShowIcqStatus && $this->m_UserIcq)
 				{
 					$icq = preg_replace('/[^0-9]/', '', $this->m_UserIcq);
 					$alt = htmlspecialchars($this->m_UserIcq);
-					$result .= ' <span class="usericq"><img src="http://wwp.icq.com/scripts/online.dll?icq=' . htmlspecialchars($icq) . '&amp;img=5" width="18" height="18" alt="ICQ: ' . $alt . '" title = "' . $alt . '" /></span>';
+					$result .= " <span class='usericq'><a href='http://www.icq.com/people/about_me.php?uin=$icq'><img src='http://wwp.icq.com/scripts/online.dll?icq=$icq&amp;img=5' width='18' height='18' alt='ICQ: $alt' title='$alt' /></a></span>";
 				}
 				if ($sepsShowSkypeStatus && $this->m_UserSkype)
 				{
 					$skype = htmlspecialchars($this->m_UserSkype);
-					$result .= ' <a class="userskype" href="skype:' . $skype . '"><img src="http://mystatus.skype.com/smallicon/' . $skype . '" width="16" height="16" alt="Skype: ' . $skype . '" title = "' . $skype . '" /></a>';
+					$result .= " <a class='userskype' href='skype:$skype'><img src='http://mystatus.skype.com/smallicon/$skype' width='16' height='16' alt='Skype: $skype' title='$skype' /></a>";
 				}
 			}
 		}

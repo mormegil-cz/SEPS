@@ -37,7 +37,6 @@ class Subscriber
 			{
 				$result .= ' + <span class="guests">' . $this->m_Guests . ' ' . plural($this->m_Guests, 'host', 'hosté', 'hostů') . "</span>";
 			}
-		}
 			if ($withContacts)
 			{
 				if ($this->m_UserEmail) $result .= ' <a class="usermail" href="mailto:' . htmlspecialchars($this->m_UserEmail) . '"><img src="img/mail.png" width="20" height="15" alt="Poslat e-mail" /></a>';
@@ -58,7 +57,7 @@ class Subscriber
 					$result .= ' <a class="userskype" href="skype:' . $skype . '"><img src="http://mystatus.skype.com/smallicon/' . $skype . '" width="16" height="16" alt="Skype: ' . $skype . '" title = "' . $skype . '" /></a>';
 				}
 			}
-//		}
+		}
 		return $result;
 	}
 
@@ -87,6 +86,8 @@ class Event
 	var $m_MinSubscribers;
 	var $m_Capacity;
 	var $m_MaxGuests;
+	var $m_Description;
+	var $m_DescriptionHtml;
 
 	function __construct($id, $title, $date, $subscriberCount, $minSubscribers, $capacity, $maxGuests)
 	{
@@ -97,6 +98,8 @@ class Event
 		$this->m_MinSubscribers = $minSubscribers;
 		$this->m_Capacity = $capacity;
 		$this->m_MaxGuests = $maxGuests;
+		$this->m_Description = null;
+		$this->m_DescriptionHtml = null;
 	}
 
 	public static function Load($id)
@@ -205,6 +208,34 @@ class Event
 		$accessAndPriority = $this->getUserAccessAndPriority($userid);
 		return $accessAndPriority[0];
 	}
+
+	function getDescription()
+	{
+		if ($this->m_Description == null)
+		{
+			$id = $this->m_ID;
+			$query = mysql_query("SELECT description FROM events WHERE id=$id");
+			if (!$query) return null;
+			$result = mysql_fetch_array($query);
+			if (!$result) return null;
+			$this->m_Description = $result[0];
+		}
+		return $this->m_Description;
+	}
+
+	function getDescriptionHtml()
+	{
+		if ($this->m_DescriptionHtml == null)
+		{
+			$id = $this->m_ID;
+			$query = mysql_query("SELECT descriptionhtml FROM events WHERE id=$id");
+			if (!$query) return null;
+			$result = mysql_fetch_array($query);
+			if (!$result) return null;
+			$this->m_DescriptionHtml = $result[0];
+		}
+		return $this->m_DescriptionHtml;
+	}
 }
 
 function findEvents($date)
@@ -309,6 +340,41 @@ function printEventDetails($eid)
 
 	echo '<div class="eventdetail">';
 	echo '<h2>' . htmlspecialchars($event->getTitle()) . ' ' . strftime('%d.&nbsp;%m.&nbsp;%Y', $eventdate) . '</h2>';
+
+	if (getVariableOrNull('action') == 'editdescription' && $access & sepsAccessFlagsCanCreateEvents)
+	{
+		global $sepsDescriptionParserHelp;
+		$description = $event->getDescription();
+		echo '<div class="eventdescription">';
+		echo '<form action="?" method="POST"><input type="hidden" name="action" value="savedescription" />';
+		echo "<input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
+		echo '<textarea rows="5" cols="25" name="description">';
+		echo htmlspecialchars($description);
+		echo '</textarea>';
+		if ($sepsDescriptionParserHelp)
+		{
+			echo "<div class='parserhelpinfo'>$sepsDescriptionParserHelp</div>";
+		}
+		echo '<input type="submit" value="Uložit" />';
+		echo '</form>';
+		echo '</div>';
+	}
+	else
+	{
+		$description = $event->getDescriptionHtml();
+		$descriptionEditLink = ($access & sepsAccessFlagsCanCreateEvents) ? "<div class='editlink'><a href='?action=editdescription&amp;eid=$eid&amp;date=$eventdate'>[E]</a></div>" : '';
+		if ($description)
+		{
+			echo '<div class="eventdescription">';
+			echo $descriptionEditLink;
+			echo $description;
+			echo '</div>';
+		}
+		else
+		{
+			echo $descriptionEditLink;
+		}
+	}
 	$eventCapacity = $event->getCapacity();
 	$eventSubscriberCount = $event->getSubscriberCount();
 	$eventSubscriberWithPriorityCount = 0;
@@ -537,4 +603,37 @@ function changeGuestCount($eid, $guestcount)
 	if ($guestcount < 0) $guestcount = 0;
 
 	mysql_query("UPDATE subscriptions SET guests=$guestcount WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+}
+
+function changeDescription($eid, $description)
+{
+	global $sepsLoggedUser, $sepsDescriptionParser;
+
+	$event = Event::Load($eid);
+	if (!$event) return;
+
+	// TODO: check date
+	// if ($event->getDate();
+
+	$access = $event->getUserAccess($sepsLoggedUser);
+	if (!($access & sepsAccessFlagsCanCreateEvents)) return;
+
+	$descriptionhtml = $sepsDescriptionParser($description);
+	if ($descriptionhtml === false)
+	{
+		echo '<div class="errmsg">Syntaktická chyba v popisu</div>';
+		return;
+	}
+
+	$query = mysql_query("UPDATE events SET description='" . mysql_real_escape_string($description) .
+							"', descriptionhtml='" . mysql_real_escape_string($descriptionhtml) ."' WHERE events.id=$eid LIMIT 1");
+
+	if ($query && (mysql_affected_rows() > 0))
+	{
+		echo '<div class="infomsg">Upravený popis uložen</div>';
+	}
+	else
+	{
+		echo '<div class="errmsg">Nelze uložit upravený popis</div>';
+	}
 }

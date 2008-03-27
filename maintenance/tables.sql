@@ -22,6 +22,8 @@ CREATE TABLE events (
   title VARCHAR(100) NOT NULL,
   date DATETIME NOT NULL,
   eventtype INTEGER UNSIGNED NOT NULL,
+  description BLOB NOT NULL,
+  descriptionhtml BLOB NOT NULL,
   PRIMARY KEY (id),
   CONSTRAINT FK_events_eventtypes FOREIGN KEY FK_events_eventtypes (eventtype) REFERENCES eventtypes (id)
 );

@@ -84,9 +84,14 @@ function mainPageContents()
 		if ($action == 'createevent')
 		{
 			createNewEvent();
-		} else if ($action == 'deleteevent')
+		}
+		else if ($action == 'deleteevent')
 		{
 			deleteEvent(getVariableOrNull('eid'));
+		}
+		else if ($action == 'savedescription')
+		{
+			changeDescription(getVariableOrNull('eid'), getVariableOrNull('description'));
 		}
 		else if ($action == 'sendinvitation')
 		{
@@ -211,6 +216,7 @@ EOT;
 	mainPageContents();
 
   echo '</div>';
+  echo '<br class="cleaner" />';
   echo "<div id='footer'>Powered by <a href='$sepsSoftwareHomePage'>$sepsSoftwareAboutLine</a>. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></div>';
 
 ?>

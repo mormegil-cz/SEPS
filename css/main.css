@@ -207,6 +207,23 @@ div.eventdetail h2
 	width: 100%;
 }
 
+div.eventdetail div.eventdescription
+{
+	margin-bottom: 1em;
+}
+
+div.eventdetail div.editlink
+{
+	float: right;
+	font-size: x-small;
+}
+
+div.eventdetail div.parserhelpinfo
+{
+	float: right;
+	width: 80px;
+}
+
 div.eventdetail ul
 {
 	margin: 0 0 10px 0;

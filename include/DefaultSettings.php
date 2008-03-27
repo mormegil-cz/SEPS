@@ -17,3 +17,6 @@ $sepsDefaultInvitationAccess = sepsAccessFlagsCanSee | sepsAccessFlagsHasAccess 
 $sepsPasswordHashingAlgorithm = 'sha256';
 
 $sepsadminEnable = false;
+
+$sepsDescriptionParser = htmlspecialchars;
+$sepsDescriptionParserHelp = null;

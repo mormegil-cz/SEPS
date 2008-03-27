@@ -107,19 +107,19 @@ function saveUserSettings()
 		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
-	if ($email && !preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $email))
+	if ($email && !validateEmail($email))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako e-mail</div>';
 		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
-	if ($icq && !preg_match('/^[0-9 -]+$/', $icq))
+	if ($icq && !validateIcq($icq))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako ICQ</div>';
 		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
 		return;
 	}
-	if ($jabber && !preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $jabber))
+	if ($jabber && !validateJabber($jabber))
 	{
 		echo '<div class="errmsg">Vámi zadaný řetězec nevypadá jako Jabber ID</div>';
 		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
@@ -204,7 +204,7 @@ function saveUserSettings()
 
 	if ($emailNeedsRevalidation)
 	{
-		if (sendInvitationTo($email, 0, null))
+		if (sendInvitationTo($sepsLoggedUser, $username, $email, 0, null, sepsEmailCodeEmailConfirmation))
 			echo '<div class="infomsg">Byla změněna e-mailová adresa; na novou adresu byl odeslán potvrzovací e-mail, postupujte podle v něm uvedených instrukcí.</div>';
 		else
 			echo '<div class="errmsg">Byla změněna e-mailová adresa, nepodařilo se ale odeslat potvrzovací e-mail.</div>';
@@ -215,10 +215,10 @@ function sendVerificationEmail()
 {
 	global $sepsLoggedUser;
 
-	$query = mysql_query("SELECT email FROM users WHERE id=$sepsLoggedUser");
-	$userData = mysql_fetch_array($query);
+	$query = mysql_query("SELECT username, email FROM users WHERE id=$sepsLoggedUser");
+	$userData = mysql_fetch_assoc($query);
 
-	if ($userData && sendInvitationTo($userData[0], 0, null))
+	if ($userData && sendInvitationTo($userData['username'], $userData['email'], 0, null, sepsEmailCodeEmailConfirmation))
 		echo '<div class="infomsg">Na vaši adresu (<tt>' . htmlspecialchars($userData[0]) . '</tt>) byl odeslán potvrzovací e-mail, postupujte podle v něm uvedených instrukcí.</div>';
 	else
 		echo '<div class="infomsg">Nepodařilo se odeslat potvrzovací e-mail.</div>';

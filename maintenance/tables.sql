@@ -40,7 +40,8 @@ CREATE TABLE users (
   skype VARCHAR(100) NOT NULL DEFAULT '',
   emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
-  CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username)
+  CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username),
+  INDEX IX_users_email(email)
 );
 
 CREATE TABLE usersprojects (
@@ -72,6 +73,7 @@ CREATE TABLE emailcodes (
   fromuser INTEGER UNSIGNED NOT NULL,
   createdate DATETIME NOT NULL,
   forproject INTEGER UNSIGNED NULL,
+  type SMALLINT UNSIGNED NOT NULL,
   accepted TINYINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   CONSTRAINT FK_emailcodes_fromuser FOREIGN KEY FK_emailcodes_fromuser (fromuser) REFERENCES users(id),

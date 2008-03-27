@@ -28,6 +28,21 @@ function plural($value, $singular, $plural234, $plural)
 	}
 }
 
+function validateEmail($email)
+{
+	return preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $email);
+}
+
+function validateIcq($icq)
+{
+	return preg_match('/^[0-9 -]+$/', $icq);
+}
+
+function validateJabber($jabber)
+{
+	return preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $jabber);
+}
+
 if (function_exists('imap_8bit'))
 {
 	function encodeMailHeader($string, $encoding='UTF-8')

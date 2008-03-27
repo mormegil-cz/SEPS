@@ -19,3 +19,7 @@ define('sepsAccessMaxValidBit', 0x0400);
 $sepsAccessFlagNames = array('Prohlížet události', 'Měnit svou účast', 'Vidět kontakty', 'Posílat pozvánky do projektu', 'Vytvářet nové události', 'Rušit události', 'Upravovat prioritu účastníků události', 'Spravovat uživatele projektu', 'Přidávat zprávy na web', 'Posílat hromadné zprávy e-mailem', 'Spravovat typy událostí');
 
 define('sepsEmailCodeLength', 25);
+
+define('sepsEmailCodeProjectInvitation', 1);
+define('sepsEmailCodeEmailConfirmation', 2);
+define('sepsEmailCodePasswordReset', 3);

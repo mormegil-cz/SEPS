@@ -24,6 +24,11 @@ function mainPageContents()
 		if (acceptedInvitation()) performLogin();
 		else return;
 	}
+	else if ($action == 'dopasswordreset')
+	{
+		if (doPasswordReset()) performLogin();
+		else return;
+	}
 
 	// $action = 'login';
 	if ($action == 'login')
@@ -49,8 +54,20 @@ function mainPageContents()
 
 	if (!$sepsLoggedUser)
 	{
-		// nepřihlášený uživatel
-		loginScreen();
+		if ($action == 'resetpass')
+		{
+			// reset hesla
+			passwordResetForm();
+		}
+		elseif ($action == 'sendpassreset')
+		{
+			sendPasswordReset();
+		}
+		else
+		{
+			// nepřihlášený uživatel
+			loginScreen();
+		}
 	}
 	else
 	{

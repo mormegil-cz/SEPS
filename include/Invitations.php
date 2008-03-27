@@ -2,7 +2,7 @@
 
 require_once('./include/Logging.php');
 
-function sendInvitationTo($email, $project, $projectname)
+function sendInvitationTo($userid, $username, $email, $project, $projectname, $invitationtype)
 {
     global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail;
 
@@ -17,17 +17,19 @@ function sendInvitationTo($email, $project, $projectname)
 
 	$projectOrNull = $project ? $project : "NULL";
 	$date = strftime('%Y-%m-%d %H:%M:%S');
-	if (!mysql_query("INSERT INTO emailcodes (email, code, fromuser, createdate, forproject) VALUES ('" . mysql_real_escape_string($email) . "', '" . mysql_real_escape_string($code) . "' , $sepsLoggedUser, '$date', $projectOrNull)") || !mysql_affected_rows())
+	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysql_real_escape_string($email) . "', '" . mysql_real_escape_string($code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
+	if (!mysql_query($sql) || !mysql_affected_rows())
 	{
-		echo '<div class="errmsg">MySQL error: ' . mysql_error() . '</div>';
+		echo '<div class="errmsg">MySQL error for [' . htmlspecialchars($sql) . ']: ' . mysql_error() . '</div>';
 		return false;
 	}
 
-	if ($project)
+	switch($invitationtype)
 	{
-		$subj = encodeMailHeader("Pozvánka do projektu $projectname");
-		$replyTo = $sepsLoggedUserEmail;
-		$mailtext = <<<EOT
+		case sepsEmailCodeProjectInvitation:
+			$subj = encodeMailHeader("Pozvánka do projektu $projectname");
+			$replyTo = $sepsLoggedUserEmail;
+			$mailtext = <<<EOT
 Dobrý den,
 
 uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname
@@ -39,17 +41,35 @@ Pokud pozvánku přijmout nechcete, můžete tuto zprávu ignorovat.
 
 Hezký den!
 EOT;
-	}
-	else
-	{
-		$subj = encodeMailHeader("Ověření e-mailové adresy v systému $sepsTitle");
-		$replyTo = $sepsAdminMail;
-		$mailtext = <<<EOT
+			break;
+
+		case sepsEmailCodeEmailConfirmation:
+			$subj = encodeMailHeader("Ověření e-mailové adresy v systému $sepsTitle");
+			$replyTo = $sepsAdminMail;
+			$mailtext = <<<EOT
 Dobrý den,
 
 v systému $sepsTitle někdo nastavil uživatelskému účtu $sepsLoggedUsername
 tuto e-mailovou adresu. Pokud jste tímto uživatelem vy a chcete tuto změnu
 schválit, klikněte na následující odkaz:
+   $invitationuri
+
+Pokud tímto uživatelem nejste, na výše uvedený odkaz neklikejte, tuto
+zprávu můžete ignorovat.
+
+Hezký den!
+EOT;
+			break;
+
+		case sepsEmailCodePasswordReset:
+			$subj = encodeMailHeader("Nové heslo do systému $sepsTitle");
+			$replyTo = $sepsAdminMail;
+			$mailtext = <<<EOT
+Dobrý den,
+
+v systému $sepsTitle někdo požádal o vygenerování nového hesla
+k uživatelskému účtu $username. Pokud jste tímto uživatelem vy a chcete
+opravdu získat nové heslo, klikněte na následující odkaz:
    $invitationuri
 
 Pokud tímto uživatelem nejste, na výše uvedený odkaz neklikejte, tuto
@@ -115,7 +135,7 @@ function sendInvitation()
 		return;
 	}
 
-	$code = sendInvitationTo($email, $project, $projectname);
+	$code = sendInvitationTo($sepsLoggedUser, null, $email, $project, $projectname, sepsEmailCodeProjectInvitation);
 	if ($code)
 	{
 		echo '<div class="infomsg">Pozvánka odeslána</div>';
@@ -130,21 +150,31 @@ function sendInvitation()
 function receivedInvitation($invitationCode, $errormessage = null)
 {
 	$query = mysql_query(
-		"SELECT c.createdate, c.forproject, u.caption AS user
+		"SELECT c.createdate, c.`type`, u.username
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
 		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0");
 
 	$basicInvitationData = mysql_fetch_assoc($query);
-	if (!$basicInvitationData || $basicInvitationData['forproject'])
+	if (!$basicInvitationData)
 	{
 		receivedProjectInvitation($invitationCode, $errormessage);
 		return false;
 	}
-	else
+
+	switch($basicInvitationData['type'])
 	{
-		receivedEmailConfirmation($invitationCode);
-		return true;
+		case sepsEmailCodeProjectInvitation:
+			receivedProjectInvitation($invitationCode, $errormessage);
+			return false;
+
+		case sepsEmailCodeEmailConfirmation:
+			receivedEmailConfirmation($invitationCode);
+			return true;
+
+		case sepsEmailCodePasswordReset:
+			receivedPasswordReset($invitationCode, $basicInvitationData['username'], $errormessage);
+			return false;
 	}
 }
 
@@ -197,7 +227,9 @@ function receivedProjectInvitation($invitationCode, $errormessage)
 	echo '<label for="firstname">Křestní jméno:</label> <input type="text" name="firstname" id="firstname" maxlength="50" /><br />';
 	echo '<label for="lastname">Příjmení:</label> <input type="text" name="lastname" id="lastname" maxlength="50" /><br />';
 	echo '<label for="caption">Jak uvádět vaše jméno:</label> <input type="text" name="caption" id="caption" maxlength="100" /><br />';
+	echo '<label for="jabber">Jabber:</label> <input type="text" name="jabber" id="jabber" maxlength="100" /><br />';
 	echo '<label for="icq">ICQ:</label> <input type="text" name="icq" id="icq" maxlength="12" /><br />';
+	echo '<label for="skype">Skype:</label> <input type="text" name="skype" id="skype" maxlength="100" /><br />';
 	echo '</div>';
 
 	echo '<input type="submit" value="Odeslat" />';
@@ -207,10 +239,10 @@ function receivedProjectInvitation($invitationCode, $errormessage)
 function receivedEmailConfirmation($invitationCode)
 {
 	$query = mysql_query(
-		"SELECT c.createdate, u.caption, u.email, u.id, u.emailvalidated
+		"SELECT c.createdate, u.id, u.emailvalidated
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0");
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodeEmailConfirmation);
 	$data = mysql_fetch_assoc($query);
 	if (!$data)
 	{
@@ -239,6 +271,66 @@ function receivedEmailConfirmation($invitationCode)
 	invalidateAllEmailConfirmationsForUser($userid);
 }
 
+function receivedPasswordReset($invitationCode, $username, $errormessage)
+{
+	echo '<div class="bigform invitation">';
+	if ($errormessage)
+	{
+		echo "<div class='errmsg'>$errormessage</div>";
+	}
+	else
+	{
+		echo 'Nyní můžete uživateli <i>' . htmlspecialchars($username) . '</i> nastavit nové heslo.';
+	}
+	echo '<form action="?" method="post"><input type="hidden" name="action" value="dopasswordreset" /><input type="hidden" name="invitation" value="' . $invitationCode . '" /><input type="hidden" name="username" value="' . htmlspecialchars($username) . '" />';
+	echo '<label for="password">Nové heslo:</label> <input class="required" type="password" name="password" id="password" /><br />';
+	echo '<label for="password2">Heslo znovu:</label> <input class="required" type="password" name="password2" id="password2" /><br />';
+
+	echo '<input type="submit" value="Změnit heslo" />';
+	echo '</div>';
+}
+
+function doPasswordReset()
+{
+	require_once('./include/Login.php');
+	$invitationCode = getVariableOrNull('invitation');
+	$username = getVariableOrNull('username');
+	$password = getVariableOrNull('password');
+	$password2 = getVariableOrNull('password2');
+
+	if ($password != $password2)
+	{
+		receivedInvitation($invitationCode, 'Zadaná hesla se navzájem liší.');
+		return false;
+	}
+
+	$query = mysql_query(
+		"SELECT c.createdate, c.fromuser
+		FROM emailcodes c
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodePasswordReset);
+	$data = mysql_fetch_assoc($query);
+	if (!$data)
+	{
+		echo '<h2>Neplatný kód</h2>';
+		echo '<div class="errmsg">Tento odkaz již není platný.</div>';
+		echo '<div>Pokud se chcete přihlásit, pokračujte na <a href="' . htmlspecialchars($sepsFullBaseUri) . '">hlavní stranu</a>.</div>';
+		return false;
+	}
+
+	$userid = $data['fromuser'];
+	$passhash = hashPassword($password);
+
+	$sql = "UPDATE users SET password='$passhash' WHERE id=$userid AND username='" . mysql_real_escape_string($username) . "' LIMIT 1";
+	if (!mysql_query($sql) || (mysql_affected_rows() != 1))
+	{
+		echo '<div class="errmsg">Chyba při změně hesla [' . htmlspecialchars($sql) . ']: ' . mysql_error() . '</div>';
+		return false;
+	}
+
+	echo '<div class="infomsg">Heslo bylo úspěšně nastaveno</div>';
+	return true;
+}
+
 function invalidateAllEmailConfirmationsForUser($user)
 {
 	return mysql_query(
@@ -258,7 +350,9 @@ function acceptedInvitation()
 	$firstname = getVariableOrNull('firstname');
 	$lastname = getVariableOrNull('lastname');
 	$caption = getVariableOrNull('caption');
+	$jabber = getVariableOrNull('jabber');
 	$icq = getVariableOrNull('icq');
+	$skype = getVariableOrNull('skype');
 
 	if (!$username)
 	{
@@ -271,7 +365,7 @@ function acceptedInvitation()
 		FROM emailcodes c
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
 		INNER JOIN projects p ON c.forproject=p.id
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
+		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite . " AND c.type=" . sepsEmailCodeProjectInvitation);
 	$invitation = mysql_fetch_assoc($invitationQuery);
 	if (!$invitation)
 	{
@@ -319,19 +413,37 @@ function acceptedInvitation()
 			return FALSE;
 		}
 
+		if ($email && !validateEmail($email))
+		{
+			receivedInvitation($invitationCode, 'Vámi zadaný řetězec nevypadá jako e-mailová adresa');
+			return FALSE;
+		}
+		if ($icq && !validateIcq($icq))
+		{
+			receivedInvitation($invitationCode, 'Vámi zadaný řetězec nevypadá jako ICQ číslo');
+			return FALSE;
+		}
+		if ($jabber && !validateJabber($jabber))
+		{
+			receivedInvitation($invitationCode, 'Vámi zadaný řetězec nevypadá jako Jabber ID');
+			return FALSE;
+		}
+
 		if (!$caption) $caption = $username;
 		$email = $invitation['email'];
 
 	    mysql_query("BEGIN");
 
 		// založit nového uživatele
-		if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, icq, emailvalidated) VALUES ('"
+		if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
 			. mysql_real_escape_string($username) . "', '"
 			. mysql_real_escape_string($caption) . "', '"
 			. mysql_real_escape_string($firstname) . "', '"
 			. mysql_real_escape_string($lastname) . "', '"
 			. mysql_real_escape_string(hashPassword($password)) . "', '"
 			. mysql_real_escape_string($email) . "', '"
+			. mysql_real_escape_string($jabber) . "', '"
+			. mysql_real_escape_string($skype) . "', '"
 			. mysql_real_escape_string($icq) . "', 1)"))
 		{
 			mysql_query("ROLLBACK");

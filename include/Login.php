@@ -2,12 +2,76 @@
 
 function loginScreen()
 {
+	global $sepsPageMessage;
+
 	echo '<div class="bigform login"><form action="?" method="post"><input type="hidden" name="action" value="login" />';
 	if (getVariableOrNull('noip')) echo '<input type="hidden" name="noipcheck" value="1" />';
-	echo 'Uživatel: <input type="text" name="username" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
-	echo 'Heslo: <input type="password" name="password" /><br />';
+	echo '<label for="username">Uživatel:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
+	echo '<label for="password">Heslo:</label> <input type="password" id="password" name="password" /><br />';
 	echo '<input type="submit" value="Přihlásit se" />';
+	if ($sepsPageMessage)
+	{
+		echo '<br /><a href="?action=resetpass">Zapomněl jsem heslo</a>';
+	}
 	echo '</form></div>';
+}
+
+function passwordResetForm($errmsg = null)
+{
+	echo '<div class="bigform passwordreset">';
+	echo '<h2>Zapomenuté heslo</h2>';
+	echo '<form action="?" method="post"><input type="hidden" name="action" value="sendpassreset" />';
+	if ($errmsg) echo "<div class='errmsg'>$errmsg</div>";
+	echo '<div><small class="formhelp">Pokud jste zapomněli heslo, vyplňte své uživatelské jméno, nebo registrovaný e-mail a stiskněte tlačítko. Na váš e-mail bude doručena zpráva s dalšími pokyny.</small></div>';
+	echo '<label for="username">Uživatelské jméno:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
+	echo '<label for="email">E-mail:</label> <input type="text" id="email" name="email" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('email')) . '" /><br />';
+	echo '<input type="submit" value="Vygenerovat nové heslo" />';
+	echo '</form></div>';
+}
+
+function sendPasswordReset()
+{
+	$username = getVariableOrNull('username');
+	$email = getVariableOrNull('email');
+
+	if (!$username && !$email)
+	{
+		passwordResetForm('Musíte zadat uživatelské jméno, nebo e-mailovou adresu.');
+		return;
+	}
+	if ($username && $email)
+	{
+		passwordResetForm('Nezadávejte oba údaje, stačí zadat <em>buď</em> uživatelské jméno, <em>nebo</em> e-mailovou adresu.');
+		return;
+	}
+	$query = null;
+	if ($username)
+	{
+		$query = mysql_query("SELECT id, username, email FROM users WHERE username='" . mysql_real_escape_string($username) . "'");
+	}
+	else
+	{
+		$query = mysql_query("SELECT id, username, email FROM users WHERE email='" . mysql_real_escape_string($email) . "' AND emailvalidated=1 LIMIT 2");
+	}
+
+	$rows = mysql_num_rows($query);
+	if ($rows != 1)
+	{
+		passwordResetForm($rows == 0 ? 'Žádný uživatel neodpovídá zadaným údajům' : 'Takovou e-mailovou adresu má více uživatelů, pro jejich rozlišení byste museli použít uživatelské jméno místo e-mailu');
+		return;
+	}
+
+	$user = mysql_fetch_assoc($query);
+
+	if (!sendInvitationTo($user['id'], $user['username'], $user['email'], 0, null, sepsEmailCodePasswordReset))
+	{
+		echo '<div class="errmsg">Chyba při odesílání nového hesla</div>';
+		return;
+	}
+
+	echo '<div class="bigform passwordreset">';
+	echo '<h2>Vygenerováno nové heslo</h2>';
+	echo '<p>Na registrovaný e-mail byla odeslána zpráva s dalšími pokyny.</p>';
 }
 
 function performLogout()

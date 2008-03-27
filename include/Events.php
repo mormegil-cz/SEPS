@@ -37,6 +37,7 @@ class Subscriber
 			{
 				$result .= ' + <span class="guests">' . $this->m_Guests . ' ' . plural($this->m_Guests, 'host', 'hosté', 'hostů') . "</span>";
 			}
+		}
 			if ($withContacts)
 			{
 				if ($this->m_UserEmail) $result .= ' <a class="usermail" href="mailto:' . htmlspecialchars($this->m_UserEmail) . '"><img src="img/mail.png" width="20" height="15" alt="Poslat e-mail" /></a>';
@@ -47,7 +48,7 @@ class Subscriber
 				}
 				if ($sepsShowIcqStatus && $this->m_UserIcq)
 				{
-					$icq = ereg_replace('[^0-9]', '', $this->m_UserIcq);
+					$icq = preg_replace('/[^0-9]/', '', $this->m_UserIcq);
 					$alt = htmlspecialchars($this->m_UserIcq);
 					$result .= ' <span class="usericq"><img src="http://wwp.icq.com/scripts/online.dll?icq=' . htmlspecialchars($icq) . '&amp;img=5" width="18" height="18" alt="ICQ: ' . $alt . '" title = "' . $alt . '" /></span>';
 				}
@@ -57,7 +58,7 @@ class Subscriber
 					$result .= ' <a class="userskype" href="skype:' . $skype . '"><img src="http://mystatus.skype.com/smallicon/' . $skype . '" width="16" height="16" alt="Skype: ' . $skype . '" title = "' . $skype . '" /></a>';
 				}
 			}
-		}
+//		}
 		return $result;
 	}
 

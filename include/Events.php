@@ -268,7 +268,6 @@ function printEventsCalendar($showSelectedDate)
 {
 	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess;
 
-	// NOTE: align="left" is a workaround for Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=14984
 	echo '<div class="calendar"><table class="calendar"><caption>Plánované akce</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
 
@@ -278,7 +277,7 @@ function printEventsCalendar($showSelectedDate)
 	$startDate = $startDateArg ? $startDateArg : mktime();
 	$selectedStr = strftime('%d.&nbsp;%m.', $startDate);
 	$startDateArray = getdate($startDate);
-	$startMonday = $startDate - 86400 * ((7 + $startDateArray['wday'] - 1) % 7);
+	$startMonday = 86400 * floor($startDate / 86400 - (7 + $startDateArray['wday'] - 1) % 7);
 
 	$date = $startMonday;
 	for ($week = 0; $week < $sepsCalendarWeeks; $week++)
@@ -319,8 +318,8 @@ function printEventsCalendar($showSelectedDate)
 	}
 
 	echo '</table>';
-	$prevdate = strftime($startDate - 7 * 86400);
-	$nextdate = strftime($startDate + 7 * 86400);
+	$prevdate = strftime(floor($startDate/86400 - 7) * 86400);
+	$nextdate = strftime(floor($startDate/86400 + 7) * 86400);
 	echo "<div class='linkprev'><a href='?date=$prevdate'>&uarr; Předchozí</a></div><div class='linknext'><a href='?date=$nextdate'>Následující &darr;</a></div>";
 	echo '<br class="cleaner" />';
 	echo '</div>';

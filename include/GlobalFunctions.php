@@ -67,3 +67,18 @@ else
 	  return "=?$encoding?B?" . base64_encode($string) . '?=';
 	}
 }
+
+if (function_exists('mb_strlen()'))
+{
+	function strlen_utf8($string)
+	{
+		return mb_strlen($string, 'utf-8');
+	}
+}
+else
+{
+	function strlen_utf8($string)
+	{
+		return preg_match_all('/[\x00-\x7F\xC0-\xFD]/', $string, $dummy);
+	}
+}

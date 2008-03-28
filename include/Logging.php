@@ -7,6 +7,7 @@ function logMessage($message)
 
 function display_log()
 {
+	echo '<div class="bottomform">';
 	echo '<h2>Protokolovací záznamy</h2>';
 	echo '<table class="logview">';
 	echo '<tr><th>Čas</th><th>Zpráva</th></tr>';
@@ -16,4 +17,5 @@ function display_log()
 		echo '<tr><td>' . $row['timestamp'] . '</td><td>' . htmlspecialchars($row['entry']) . '</td></tr>';
 	}
 	echo '</table>';
+	echo '</div>';
 }

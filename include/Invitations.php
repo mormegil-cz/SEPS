@@ -2,7 +2,19 @@
 
 require_once('./include/Logging.php');
 
-function sendInvitationTo($userid, $username, $email, $project, $projectname, $invitationtype)
+function formatInvitationText($head, $commentIntro, $comment, $tail)
+{
+	if ($comment)
+	{
+		return wordwrap($head . ' ' . $commentIntro) . "\n\n> " . str_replace("\n", "\n> ", wordwrap($comment)) . "\n\n" . wordwrap($tail);
+	}
+	else
+	{
+		return wordwrap($head . ' ' . $tail);
+	}
+}
+
+function sendInvitationTo($userid, $username, $email, $project, $projectname, $invitationtype, $comment = null)
 {
     global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail;
 
@@ -29,18 +41,17 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 		case sepsEmailCodeProjectInvitation:
 			$subj = encodeMailHeader("Pozvánka do projektu $projectname");
 			$replyTo = $sepsLoggedUserEmail;
-			$mailtext = <<<EOT
+			$mailtext = formatInvitationText("
 Dobrý den,
 
-uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname
-v plánovacím systému $sepsTitle. Pokud chcete tuto pozvánku přijmout,
-klikněte na následující odkaz a pokračujte podle tam uvedených pokynů:
+uživatel $sepsLoggedUserCaption vás chce pozvat do projektu $projectname v plánovacím systému $sepsTitle.",
+"Uživatel k tomu dodává následující komentář:", $comment,
+"Pokud chcete tuto pozvánku přijmout, klikněte na následující odkaz a pokračujte podle tam uvedených pokynů:
    $invitationuri
 
 Pokud pozvánku přijmout nechcete, můžete tuto zprávu ignorovat.
 
-Hezký den!
-EOT;
+Hezký den!");
 			break;
 
 		case sepsEmailCodeEmailConfirmation:
@@ -107,7 +118,9 @@ function invitationForm()
 	}
 	echo '</select><br />';
 
-	echo '<label for="email">E-mail, na který se má pozvánka zaslat:</label> <input type="text" name="email" id="email" /><br />';
+	echo '<label for="email">E-mail, na který se má pozvánka zaslat:</label> <input type="text" name="email" id="email" maxlength="100" /><br />';
+	echo '<small class="formhelp">Nepovinně také můžete uživateli k pozvánce připojit komentář:</small><br />';
+	echo '<textarea name="comment" rows="10" cols="50"></textarea><br />';
 	echo '<input type="submit" value="Odeslat pozvánku" />';
 	echo '</form>';
 	echo '</div>';
@@ -119,14 +132,26 @@ function sendInvitation()
 
 	$email = getVariableOrNull('email');
 	$project = getVariableOrNull('project');
+	$comment = getVariableOrNull('comment');
+	if (strlen_utf8($comment) > 2500)
+	{
+		echo '<div class="errmsg">Váš komentář je příliš dlouhý.</div>';
+		return;
+	}
 	if (!$email || !$project || !$sepsLoggedUserEmail) return;
 
-	$query = mysql_query("SELECT p.title, up.access FROM usersprojects up INNER JOIN projects p ON up.project=p.id WHERE up.user = $sepsLoggedUser AND up.project = $project");
+	if (!validateEmail($email))
+	{
+		echo '<div class="errmsg">Text „' . htmlspecialchars($email) . '“ nevypadá jako e-mail.</div>';
+		return;
+	}
+
+	$query = mysql_query("SELECT p.title, up.access, p.invitationaccessmask FROM usersprojects up INNER JOIN projects p ON up.project=p.id WHERE up.user = $sepsLoggedUser AND up.project = $project");
 	$row = mysql_fetch_assoc($query);
 	if (!$row) return;
 	if (!($row['access'] & sepsAccessFlagsCanInvite)) return;
 	$projectname = $row['title'];
-	$givenaccess = $row['access'] & $sepsDefaultInvitationAccess;
+	$givenaccess = $row['access'] & $sepsDefaultInvitationAccess & ~$row['invitationaccessmask'];
 
 	$checkquery = mysql_query("SELECT u.id FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.email = '" . mysql_real_escape_string($email) .  "' AND up.project = $project AND (up.access & $givenaccess) = $givenaccess LIMIT 1");
 	if (mysql_fetch_row($checkquery))
@@ -135,7 +160,7 @@ function sendInvitation()
 		return;
 	}
 
-	$code = sendInvitationTo($sepsLoggedUser, null, $email, $project, $projectname, sepsEmailCodeProjectInvitation);
+	$code = sendInvitationTo($sepsLoggedUser, null, $email, $project, $projectname, sepsEmailCodeProjectInvitation, $comment);
 	if ($code)
 	{
 		echo '<div class="infomsg">Pozvánka odeslána</div>';

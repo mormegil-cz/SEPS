@@ -206,8 +206,9 @@ echo <<<EOT
  <body>
 
   <div id='header'>
-	<a href='?'><img id='sitelogo' src='$sepsSiteLogo' width='100' height='100' alt='' /></a>
+	<div id='sitelogo'><a href='?'><img src='$sepsSiteLogo' width='100' height='100' alt='' /></a></div>
 	<h1 id='sitecaption'>$sepsTitle</h1>
+	<br class="cleaner" />
   </div>
   <div id='page'>
 	<div id='contents'>

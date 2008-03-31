@@ -337,3 +337,28 @@ table.usersoverview td
 	margin: 5px;
 	border-top: 1px dotted black;
 }
+
+div.eventlist ul div
+{
+	padding-left: 3px;
+}
+
+div.eventlist ul div.event-empty
+{
+	border-left: 0.5em solid #ffb;
+}
+
+div.eventlist ul div.event-filled
+{
+	border-left: 0.5em solid #dfd;
+}
+
+div.eventlist ul div.event-full
+{
+	border-left: 0.5em solid #fee;
+}
+
+div.eventlist ul div.event-overfilled
+{
+	border-left: 0.5em solid #fdd;
+}

@@ -172,6 +172,14 @@ class Event
 		return $this->m_SubscriberCount > $this->m_Capacity;
 	}
 
+	function getCssClass()
+	{
+		if ($this->isOverfilled()) return 'event-overfilled';
+		elseif ($this->isFull()) return 'event-full';
+		elseif ($this->isFilled()) return 'event-filled';
+		else return 'event-empty';
+	}
+
 	function getListOfSubscribers()
 	{
 		$eid = $this->m_ID;
@@ -264,11 +272,33 @@ function findEvents($date)
 	return $result;
 }
 
+function getEventList($fromdate, $limit)
+{
+	global $sepsLoggedUser;
+
+	$query = mysql_query(
+		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests, up.access,
+				(SELECT COUNT(*) + SUM(guests) FROM subscriptions s WHERE s.event=e.id) AS subscribercount
+		FROM events e
+		INNER JOIN eventtypes t ON e.eventtype=t.id
+		INNER JOIN projects p ON t.project=p.id
+		INNER JOIN usersprojects up ON up.project=p.id
+		WHERE up.user=$sepsLoggedUser AND e.date>=" . strftime('%Y%m%d', $fromdate) . " LIMIT $limit");
+	if (!$query) return null;
+
+	$result = array();
+	while ($row = mysql_fetch_assoc($query))
+	{
+		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
+	}
+	return $result;
+}
+
 function printEventsCalendar($showSelectedDate)
 {
 	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess;
 
-	echo '<div class="calendar"><table class="calendar"><caption>Plánované akce</caption>';
+	echo '<div class="calendar"><table class="calendar"><caption>Kalendář plánovaných akcí</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
 
 	$today = mktime();
@@ -301,11 +331,7 @@ function printEventsCalendar($showSelectedDate)
 
 			foreach(findEvents($date) as $event)
 			{
-				$cssClass = '';
-				if ($event->isOverfilled()) $cssClass = 'event-overfilled';
-				elseif ($event->isFull()) $cssClass = 'event-full';
-				elseif ($event->isFilled()) $cssClass = 'event-filled';
-				else $cssClass = 'event-empty';
+				$cssClass = $event->getCssClass();
 				$eid = $event->getId();
 				$eventTitle = htmlspecialchars($event->getTitle());
 				$subscriberCount = $event->getSubscriberCount();

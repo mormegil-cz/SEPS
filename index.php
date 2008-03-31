@@ -105,6 +105,11 @@ function mainPageContents()
 		{
 			saveUserSettings();
 		}
+		else if ($action == 'eventlist')
+		{
+			require_once('./include/EventList.php');
+			showEventList();
+		}
 
 		printNews();
 
@@ -163,7 +168,8 @@ function mainPageContents()
 		echo '<br class="cleaner" />';
 
 		$menu = array();
-		$menu[] = array('?', 'Přehled');
+		$menu[] = array('?', 'Kalendář');
+		$menu[] = array('?action=eventlist', 'Seznam');
 		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
 		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');

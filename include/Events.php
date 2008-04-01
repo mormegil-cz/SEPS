@@ -283,7 +283,7 @@ function getEventList($fromdate, $limit)
 		INNER JOIN eventtypes t ON e.eventtype=t.id
 		INNER JOIN projects p ON t.project=p.id
 		INNER JOIN usersprojects up ON up.project=p.id
-		WHERE up.user=$sepsLoggedUser AND e.date>=" . strftime('%Y%m%d', $fromdate) . " LIMIT $limit");
+		WHERE up.user=$sepsLoggedUser AND e.date>=" . strftime('%Y%m%d', $fromdate) . " ORDER BY e.date LIMIT $limit");
 	if (!$query) return null;
 
 	$result = array();
@@ -305,6 +305,7 @@ function printEventsCalendar($showSelectedDate)
 	$todayStr = strftime('%d.&nbsp;%m.', $today);
 	$startDateArg = getVariableOrNull('date');
 	$startDate = $startDateArg ? $startDateArg : mktime();
+	$startDate = 86400 * floor($startDate / 86400);
 	$selectedStr = strftime('%d.&nbsp;%m.', $startDate);
 	$startDateArray = getdate($startDate);
 	$startMonday = 86400 * floor($startDate / 86400 - (7 + $startDateArray['wday'] - 1) % 7);

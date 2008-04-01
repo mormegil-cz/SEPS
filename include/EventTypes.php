@@ -67,7 +67,7 @@ function eventTypesForm()
 		$addmaxusers = getVariableOrNull('addmaxusers');
 		if (!is_numeric($addmaxusers)) $addmaxusers = null;
 		if ($addmaxusers <= 0) $addmaxusers = null;
-		$addmaxguests = getVariableOrNull('addmaxusers');
+		$addmaxguests = getVariableOrNull('addmaxguests');
 		if (!is_numeric($addmaxguests)) $addmaxguests = null;
 		if ($addmaxguests <= 0) $addmaxguests = null;
 		$editcaption = getVariableOrNull('editcaption');
@@ -144,7 +144,7 @@ function eventTypesForm()
 				if ($changes)
 				{
 					echo '<div class="infomsg">Změny provedeny</div>';
-					$editcaption = $editminusers = $editmaxusers = null;
+					$editcaption = $editminusers = $editmaxusers = $editmaxguests = null;
 				}
 				break;
 			case 'remove':

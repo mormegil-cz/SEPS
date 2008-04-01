@@ -18,7 +18,7 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 {
     global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail;
 
-	if (!$email || !$sepsAdminMail) return false;
+	if (!$email || !$sepsAdminMail || !$userid) return false;
 
 	$code = '';
 	for($i = 0; $i < sepsEmailCodeLength; $i++)
@@ -126,11 +126,76 @@ function invitationForm()
 	echo '</div>';
 }
 
+function inviteUserInternal($email, $project, $projectname, $comment, $givenaccess)
+{
+	global $sepsLoggedUsername;
+	$userquery = mysql_query("SELECT u.id, u.username, u.caption FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.email = '" . mysql_real_escape_string($email) .  "'");
+	$founduser = mysql_fetch_assoc($userquery);
+	if ($founduser)
+	{
+		$founduserid = $founduser['id'];
+		$foundusername = $founduser['username'];
+		$foundusercaption = $founduser['caption'];
+		$currentaccessquery = mysql_query("SELECT up.access FROM usersprojects up WHERE up.user=$founduserid AND up.project=$project LIMIT 1");
+		$currentaccessrow = mysql_fetch_row($currentaccessquery);
+		if ($currentaccessrow)
+		{
+			// the user is already a member of this project
+			$currentaccess = $currentaccessrow[0];
+
+			if (($currentaccess & $givenaccess) == $givenaccess)
+			{
+				// ...and has all access he would get
+				return array(false, "Uživatel $foundusercaption již je členem tohoto projektu");
+			}
+
+			// ...but he will receive more access rights now
+			if (mysql_query("UPDATE usersprojects SET access=(access | $givenaccess) WHERE user=$founduserid AND project=$project LIMIT 1") && mysql_affected_rows() > 0)
+			{
+				logMessage("Uživatel $sepsLoggedUsername navýšil uživateli $foundusername přístupová oprávnění do projektu $projectname");
+				return array(true, "Uživatel $foundusercaption již byl členem tohoto projektu, avšak nyní mu byla zvýšena přístupová oprávnění");
+			}
+			else
+			{
+				echo mysql_error();
+				return array(false, "Nepodařilo se navýšit oprávnění uživateli $foundusercaption");
+			}
+		}
+		else
+		{
+			// this user is not yet a member of this project
+			if (mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($founduserid, $project, $givenaccess)") && mysql_affected_rows() > 0)
+			{
+				logMessage("Uživatel $sepsLoggedUsername přidal uživatele $foundusername do projektu $projectname");
+				return array(true, "Uživateli $foundusercaption byl přidělen přístup do tohoto projektu");
+			}
+			else
+			{
+				return array(false, "Nepodařilo se přidat uživatele $foundusercaption do tohoto projektu");
+			}
+		}
+	}
+	else
+	{
+		global $sepsLoggedUser;
+		$code = sendInvitationTo($sepsLoggedUser, null, $email, $project, $projectname, sepsEmailCodeProjectInvitation, $comment);
+		if ($code)
+		{
+			logMessage("Uživatel $sepsLoggedUsername poslal pozvánku do projektu $projectname na $email; kód: $code");
+			return array(true, "Pozvánka odeslána");
+		}
+		else
+		{
+			return array(false, "Chyba při odesílání pozvánky. Zkuste to později.");
+		}
+	}
+}
+
 function sendInvitation()
 {
 	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserEmail, $sepsDefaultInvitationAccess;
 
-	$email = getVariableOrNull('email');
+	$emailstr = getVariableOrNull('email');
 	$project = getVariableOrNull('project');
 	$comment = getVariableOrNull('comment');
 	if (strlen_utf8($comment) > 2500)
@@ -138,11 +203,18 @@ function sendInvitation()
 		echo '<div class="errmsg">Váš komentář je příliš dlouhý.</div>';
 		return;
 	}
-	if (!$email || !$project || !$sepsLoggedUserEmail) return;
+	if (!$emailstr || !$project || !$sepsLoggedUserEmail) return;
 
-	if (!validateEmail($email))
+	if (!validateEmailList($emailstr))
 	{
-		echo '<div class="errmsg">Text „' . htmlspecialchars($email) . '“ nevypadá jako e-mail.</div>';
+		echo '<div class="errmsg">Zadaný text nevypadá jako e-mailové adresy.</div>';
+		return;
+	}
+
+	$emails = explode(',', $emailstr);
+	if (count($emails) > 100)
+	{
+		echo '<div class="errmsg">Příliš mnoho e-mailových adres.</div>';
 		return;
 	}
 
@@ -151,24 +223,20 @@ function sendInvitation()
 	if (!$row) return;
 	if (!($row['access'] & sepsAccessFlagsCanInvite)) return;
 	$projectname = $row['title'];
-	$givenaccess = $row['access'] & $sepsDefaultInvitationAccess & ~$row['invitationaccessmask'];
+	$givenaccess = $row['access'] & $sepsDefaultInvitationAccess & ~intval($row['invitationaccessmask']);
 
-	$checkquery = mysql_query("SELECT u.id FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.email = '" . mysql_real_escape_string($email) .  "' AND up.project = $project AND (up.access & $givenaccess) = $givenaccess LIMIT 1");
-	if (mysql_fetch_row($checkquery))
+	foreach($emails as $email)
 	{
-		echo '<div class="errmsg">Uživatel s tímto e-mailem již je členem tohoto projektu.</div>';
-		return;
-	}
-
-	$code = sendInvitationTo($sepsLoggedUser, null, $email, $project, $projectname, sepsEmailCodeProjectInvitation, $comment);
-	if ($code)
-	{
-		echo '<div class="infomsg">Pozvánka odeslána</div>';
-		logMessage("Uživatel $sepsLoggedUserCaption poslal pozvánku do projektu $projectname na $email; kód: $code");
-	}
-	else
-	{
-		echo '<div class="errmsg">Chyba při odesílání pozvánky. Zkuste to později.</div>';
+		$email = trim($email);
+		$result = inviteUserInternal($email, $project, $projectname, $comment, $givenaccess);
+		if ($result[0])
+		{
+			echo "<div class='infomsg'>" . htmlspecialchars($email) .  ": $result[1]</div>";
+		}
+		else
+		{
+			echo "<div class='errmsg'>" . htmlspecialchars($email) .  ": $result[1]</div>";
+		}
 	}
 }
 

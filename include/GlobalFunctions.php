@@ -33,6 +33,11 @@ function validateEmail($email)
 	return preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $email);
 }
 
+function validateEmailList($emails)
+{
+	return preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+(,\s*[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+)*$/', $emails);
+}
+
 function validateIcq($icq)
 {
 	return preg_match('/^[0-9 -]+$/', $icq);

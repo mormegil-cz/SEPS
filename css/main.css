@@ -55,8 +55,14 @@ img
 	border: 0 none;
 }
 
+.infomsg
+{
+	clear: both;
+}
+
 .errmsg
 {
+	clear: both;
 	color: #700;
 	font-weight: bold;
 	margin-bottom: 1em;

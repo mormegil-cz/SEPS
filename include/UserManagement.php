@@ -98,7 +98,7 @@ function manageUsersForm()
 		echo '</tbody></table>';
 		echo '</div>';
 
-		echo '<input type="checkbox" name="kickuser" id="kickuser"><label for="kickuser" onclick="if (this.checked) return confirm(\'Určitě vyhodit uživatele?\')">Vyhodit uživatele z projektu</label></input><br />';
+		echo '<input type="checkbox" name="kickuser" id="kickuser" onclick="if (this.checked) return confirm(\'Určitě vyhodit uživatele?\')"><label for="kickuser">Vyhodit uživatele z projektu</label></input><br />';
 	}
 
 	echo '<input type="submit" value="Provést změny" />';
@@ -147,26 +147,32 @@ function userPriorityToString($priority)
 
 function modifyUser($projectId, $projectName)
 {
-	global $sepsLoggedUser, $sepsLoggedUserCaption;
+	global $sepsLoggedUser, $sepsLoggedUserCaption,  $sepsLoggedUsername;
 
 	$user = getVariableOrNull('user');
-	if (!is_numeric($user)) return;
+	if (!is_numeric($user))
+	{
+		return;
+	}
 
-	$userQuery = mysql_query("SELECT u.id, u.caption, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.id=$user");
+	$userQuery = mysql_query("SELECT u.id, u.caption, u.username, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.id=$user AND up.project=$projectId");
 	$userRow = mysql_fetch_assoc($userQuery);
 	if (!$userRow) return;
 	$userTitle = $userRow['caption'];
+	$username = $userRow['username'];
 
-	if (getVariableOrNull('kickuser') == 1)
+	$kickuser = getVariableOrNull('kickuser');
+	if ($kickuser == 1 || $kickuser == 'on')
 	{
-		if (mysql_query("DELETE FROM useraccess WHERE id=$user LIMIT 1") && (mysql_affected_rows() > 0))
+		if (mysql_query("DELETE FROM usersprojects WHERE user=$user AND project=$projectId LIMIT 1") && (mysql_affected_rows() > 0))
 		{
-			logMessage("Uživatel $sepsLoggedUserCaption vyřadil uživatele $userTitle z projektu $projectName");
+			logMessage("Uživatel $sepsLoggedUsername vyřadil uživatele $username z projektu $projectName");
 			echo '<div class="infomsg">Uživatel byl vyřazen z projektu</div>';
 		}
 		else
 		{
 			echo '<div class="errmsg">Nepodařilo se vyřadit uživatele z projektu</div>';
+			echo mysql_error();
 		}
 		return;
 	}
@@ -204,7 +210,7 @@ function modifyUser($projectId, $projectName)
 		$query = 'UPDATE usersprojects SET ' . substr($query, 2) . " WHERE user=$user AND project=$projectId LIMIT 1";
 		if (mysql_query($query) && (mysql_affected_rows() > 0))
 		{
-			logMessage("Uživatel $sepsLoggedUserCaption upravil práva uživatele $userTitle v projektu $projectName");
+			logMessage("Uživatel $sepsLoggedUsername upravil práva uživatele $username v projektu $projectName");
 			echo '<div class="infomsg">Uživatel byl upraven</div>';
 		}
 		else

@@ -32,7 +32,7 @@ function passwordResetForm($errmsg = null)
 function sendPasswordReset()
 {
 	$username = getVariableOrNull('username');
-	$email = getVariableOrNull('email');
+	$email = strtolower(trim(getVariableOrNull('email')));
 
 	if (!$username && !$email)
 	{
@@ -142,6 +142,7 @@ function hashPassword($password)
 function tryLogin($username, $password)
 {
 	if (!$username) return FALSE;
+	$username = mb_strtolower(trim($username));
 
 	$hash = hashPassword($password);
 

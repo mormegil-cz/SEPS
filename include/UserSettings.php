@@ -160,7 +160,7 @@ function saveUserSettings()
 
 	$emailNeedsRevalidation = false;
 	$items = array();
-	if ($username != $currUsername) $items['username'] = $username;
+	if ($username != $currUsername) $items['username'] = mb_strtolower(trim($username));
 	if ($usercaption != $currUsercaption) $items['caption'] = $usercaption;
 	if ($firstname != $currFirstname) $items['firstname'] = $firstname;
 	if ($lastname != $currLastname) $items['lastname'] = $lastname;

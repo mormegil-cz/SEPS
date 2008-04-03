@@ -29,7 +29,7 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 
 	$projectOrNull = $project ? $project : "NULL";
 	$date = strftime('%Y-%m-%d %H:%M:%S');
-	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysql_real_escape_string($email) . "', '" . mysql_real_escape_string($code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
+	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysql_real_escape_string(strtolower(trim($email))) . "', '" . mysql_real_escape_string($code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
 	if (!mysql_query($sql) || !mysql_affected_rows())
 	{
 		echo '<div class="errmsg">MySQL error for [' . htmlspecialchars($sql) . ']: ' . mysql_error() . '</div>';
@@ -220,8 +220,16 @@ function sendInvitation()
 
 	$query = mysql_query("SELECT p.title, up.access, p.invitationaccessmask FROM usersprojects up INNER JOIN projects p ON up.project=p.id WHERE up.user = $sepsLoggedUser AND up.project = $project");
 	$row = mysql_fetch_assoc($query);
-	if (!$row) return;
-	if (!($row['access'] & sepsAccessFlagsCanInvite)) return;
+	if (!$row)
+	{
+		echo '<div class="errmsg">Do tohoto projektu nemáte přístup.</div>';
+		return;
+	}
+	if (!($row['access'] & sepsAccessFlagsCanInvite))
+	{
+		echo '<div class="errmsg">V tomto projektu nemůžete odesílat pozvánky.</div>';
+		return;
+	}
 	$projectname = $row['title'];
 	$givenaccess = $row['access'] & $sepsDefaultInvitationAccess & ~intval($row['invitationaccessmask']);
 
@@ -437,7 +445,7 @@ function acceptedInvitation()
 	global $sepsDefaultInvitationAccess;
 
 	$invitationCode = getVariableOrNull('invitation');
-	$username = getVariableOrNull('username');
+	$username = mb_strtolower(trim(getVariableOrNull('username')));
 	$password = getVariableOrNull('password');
 	$password2 = getVariableOrNull('password2');
 	$firstname = getVariableOrNull('firstname');

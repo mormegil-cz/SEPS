@@ -320,21 +320,34 @@ function createNewUser()
 
 	mysql_query('BEGIN');
 
-	if (mysql_fetch_row(mysql_query('SELECT id FROM users WHERE username="' . mysql_real_escape_string($username) . '"')))
-	{
-		mysql_query('ROLLBACK');
-		accountCreationForm($username, $password, $password2, 'Zadané uživatelské jméno se již používá, zkuste zvolit jiné');
-		return;
-	}
-
 	$projectQuery = mysql_query("SELECT p.title, p.invitationaccessmask, up.access FROM projects p INNER JOIN usersprojects up ON up.project=p.id AND up.user=$sepsLoggedUser WHERE p.id=$project");
 	$projectRow = mysql_fetch_assoc($projectQuery);
+
 	if (!$projectRow || !($projectRow['access'] & sepsAccessFlagsCanCreateAccount))
 	{
 		echo '<div class="errmsg">V tomto projektu nemáte oprávnění zakládat uživatele</div>';
 		return;
 	}
+	$projectAccess = $projectRow['access'];
 	$projectName = $projectRow['title'];
+	$givenaccess = $projectAccess & $sepsDefaultInvitationAccess & ~intval($projectRow['invitationaccessmask']);
+
+	$existingUser = mysql_fetch_assoc(mysql_query("SELECT u.id, up.access FROM users u LEFT JOIN usersprojects up ON up.user=u.id AND up.project=$project WHERE username='" . mysql_real_escape_string($username) . "'"));
+	if ($existingUser)
+	{
+		mysql_query('ROLLBACK');
+		if (($existingUser['access'] & $givenaccess) == $givenaccess)
+		{
+			$errmsg = 'Zadané uživatelské jméno se již používá a tento uživatel již je členem tohoto projektu. Pokud chcete založit jiného uživatele, musíte zvolit jiné jméno.';
+		}
+		else
+		{
+			$errmsg = 'Zadané uživatelské jméno se již používá, zkuste zvolit jiné';
+			if ($projectAccess & sepsAccessFlagsCanInvite) $errmsg .= '; pokud chcete existujícího uživatele přidat do projektu, odešlete na jeho e-mailovou adresu <a href="?action=invite">pozvánku</a>';
+		}
+		accountCreationForm($username, $password, $password2, $errmsg);
+		return;
+	}
 
 	$username_sql = mysql_real_escape_string($username);
 	if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
@@ -350,7 +363,6 @@ function createNewUser()
 	if (!$createdIdRow) return;
 	$createdId = $createdIdRow[0];
 
-	$givenaccess = $projectRow['access'] & $sepsDefaultInvitationAccess & ~intval($projectRow['invitationaccessmask']);
 	if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($createdId, $project, $givenaccess)") || mysql_affected_rows() != 1)
 	{
 		mysql_query('ROLLBACK');

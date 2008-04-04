@@ -251,10 +251,9 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 	}
 
 	echo '<div class="bottomform usercreation">';
-	echo '<h2>Založení nového uživatele</h2>';
 	$projectsFoundCount = 0;
 	$projectIdFound = null;
-	$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanChangeUserAccess);
+	$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
 	while ($row = mysql_fetch_assoc($projectsQuery))
 	{
 		$projectsFoundCount++;
@@ -265,6 +264,7 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 				$projectTitleFound = $row['title'];
 				break;
 			case 2:
+				echo '<h2>Založení nového uživatele</h2>';
 				echo '<label for="project">Projekt:</label> <select name="project" id="project" />';
 				echo "<option value='$projectIdFound'>" . htmlspecialchars($projectTitleFound) . "</option>";
 				// fall-through!
@@ -280,6 +280,7 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 		case 1:
 			$projectId = $projectIdFound;
 			$projectName = $projectTitleFound;
+			echo '<h2>Založení nového uživatele projektu ' . htmlspecialchars($projectTitleFound) . '</h2>';
 			echo "<input type='hidden' name='project' value='$projectId' />";
 			break;
 		default:

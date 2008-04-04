@@ -74,6 +74,7 @@ function mainPageContents()
 		require_once('./include/Events.php');
 		require_once('./include/News.php');
 		require_once('./include/UserSettings.php');
+		require_once('./include/UserManagement.php');
 
 		if ($sepsadminEnable)
 		{
@@ -96,6 +97,10 @@ function mainPageContents()
 		else if ($action == 'sendinvitation')
 		{
 			sendInvitation();
+		}
+		else if ($action == 'createuser')
+		{
+			createNewUser();
 		}
 		else if ($action == 'sendemailconfirmation')
 		{
@@ -142,12 +147,15 @@ function mainPageContents()
 		{
 			invitationForm();
 		}
+		else if ($action == 'createaccount')
+		{
+			accountCreationForm();
+		}
 		else if ($action == 'messaging')
 		{
 		}
 		else if ($action == 'manageusers')
 		{
-			require_once('./include/UserManagement.php');
 			manageUsersForm();
 		}
 		else if ($action == 'manageeventtypes')
@@ -171,6 +179,7 @@ function mainPageContents()
 		$menu[] = array('?', 'Kalendář');
 		$menu[] = array('?action=eventlist', 'Seznam');
 		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
+		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateAccount) $menu[] = array('?action=createaccount', 'Založit uživatele');
 		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');

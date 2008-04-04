@@ -13,10 +13,11 @@ define('sepsAccessFlagsCanChangeUserAccess', 0x0080);
 define('sepsAccessFlagsCanSendWebMessages', 0x0100);
 define('sepsAccessFlagsCanSendMailMessages', 0x0200);
 define('sepsAccessFlagsCanEditEventTypes', 0x0400);
+define('sepsAccessFlagsCanCreateAccount', 0x0800);
 
-define('sepsAccessMaxValidBit', 0x0400);
+define('sepsAccessMaxValidBit', 0x0800);
 
-$sepsAccessFlagNames = array('Prohlížet události', 'Měnit svou účast', 'Vidět kontakty', 'Posílat pozvánky do projektu', 'Vytvářet nové události', 'Rušit události', 'Upravovat prioritu účastníků události', 'Spravovat uživatele projektu', 'Přidávat zprávy na web', 'Posílat hromadné zprávy e-mailem', 'Spravovat typy událostí');
+$sepsAccessFlagNames = array('Prohlížet události', 'Měnit svou účast', 'Vidět kontakty', 'Posílat pozvánky do projektu', 'Vytvářet nové události', 'Rušit události', 'Upravovat prioritu účastníků události', 'Spravovat uživatele projektu', 'Přidávat zprávy na web', 'Posílat hromadné zprávy e-mailem', 'Spravovat typy událostí', 'Přímo založit účet');
 
 define('sepsEmailCodeLength', 25);
 

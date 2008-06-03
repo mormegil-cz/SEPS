@@ -150,3 +150,13 @@ function tryLogin($username, $password)
 	$row = mysql_fetch_row($query);
 	if ($row) return $row[0]; else return FALSE;
 }
+
+function tryApiLogin($username, $token)
+{
+	if (!$username || !$token) return FALSE;
+	$username = mb_strtolower(trim($username));
+
+	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.apitoken='" . mysql_real_escape_string($token) . "'");
+	$row = mysql_fetch_row($query);
+	if ($row) return $row[0]; else return FALSE;
+}

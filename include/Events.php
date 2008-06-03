@@ -70,6 +70,40 @@ class Subscriber
 		return $this->m_UserID;
 	}
 
+	function getCaption()
+	{
+		return $this->m_UserCaption;
+	}
+
+	function getEmail()
+	{
+		return $this->m_UserEmail;
+	}
+
+	function getUserUri()
+	{
+		if ($this->m_UserEmail)
+		{
+			return 'MAILTO:' . $this->m_UserEmail;
+		}
+		else if ($this->m_UserJabber)
+		{
+			return 'XMPP:' . $this->m_UserJabber;
+		}
+		else if ($this->m_UserSkype)
+		{
+			return 'SKYPE:' . $this->m_UserSkype;
+		}
+		else if ($this->m_UserIcq)
+		{
+			return 'http://www.icq.com/people/about_me.php?uin=' . preg_replace('/[^0-9]/', '', $this->m_UserIcq);
+		}
+		else
+		{
+			return 'seps-uid:' . $this->m_UserID;
+		}
+	}
+
 	function getPriority()
 	{
 		return $this->m_Priority;
@@ -128,6 +162,11 @@ class Event
 	}
 
 	function getId()
+	{
+		return $this->m_ID;
+	}
+
+	function getUniqueId()
 	{
 		return $this->m_ID;
 	}

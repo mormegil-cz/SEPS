@@ -41,6 +41,7 @@ CREATE TABLE users (
   icq VARCHAR(12) NOT NULL DEFAULT '',
   skype VARCHAR(100) NOT NULL DEFAULT '',
   emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  apitoken VARCHAR(32) BINARY,
   PRIMARY KEY (id),
   CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username),
   INDEX IX_users_email(email)

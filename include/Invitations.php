@@ -20,11 +20,7 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 
 	if (!$email || !$sepsAdminMail || !$userid) return false;
 
-	$code = '';
-	for($i = 0; $i < sepsEmailCodeLength; $i++)
-	{
-		$code .= chr(ord('A') + mt_rand(0, 25));
-	}
+	$code = generateRandomToken(sepsEmailCodeLength);
 	$invitationuri = $sepsFullBaseUri . '?inv=' . $code;
 
 	$projectOrNull = $project ? $project : "NULL";

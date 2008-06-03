@@ -2,6 +2,7 @@
 
 $sepsSoftwareVersion = '0.1dev';
 $sepsSoftwareVersionLine = 'SEPS/' . $sepsSoftwareVersion;
+$sepsSoftwareVersionFpi = '-//mormegil.cz//NONSGML SEPS-' . $sepsSoftwareVersion . '//EN';
 $sepsSoftwareAboutLine = 'SEPS version ' . $sepsSoftwareVersion;
 $sepsSoftwareHomePage = 'https://opensvn.csie.org/traccgi/seps/';
 

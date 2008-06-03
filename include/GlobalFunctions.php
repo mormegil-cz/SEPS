@@ -48,6 +48,22 @@ function validateJabber($jabber)
 	return preg_match('/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$/', $jabber);
 }
 
+function generateRandomToken($len)
+{
+	$code = '';
+	for($i = 0; $i < $len; $i++)
+	{
+		$code .= chr(ord('A') + mt_rand(0, 25));
+	}
+	return $code;
+}
+
+function echoWrapped($text, $wrapColumn, $wrappedPrefix = ' ')
+{
+	echo $text;
+	// echo trim(chunk_split($text, $wrapColumn, "\r\n$wrappedPrefix"));
+}
+
 if (function_exists('imap_8bit'))
 {
 	function encodeMailHeader($string, $encoding='UTF-8')
@@ -85,5 +101,13 @@ else
 	function strlen_utf8($string)
 	{
 		return preg_match_all('/[\x00-\x7F\xC0-\xFD]/', $string, $dummy);
+	}
+}
+
+if (!function_exists('mb_strtolower'))
+{
+	function mb_strtolower($string)
+	{
+		return strtolower($string);
 	}
 }

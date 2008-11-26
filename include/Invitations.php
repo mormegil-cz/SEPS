@@ -470,7 +470,7 @@ function acceptedInvitation()
 		return FALSE;
 	}
 
-	$projectAccessMask = ~$invitation['invitationaccessmask'];
+	$projectAccessMask = ~intval($invitation['invitationaccessmask']);
 
 	$userquery = mysql_query("SELECT u.id FROM users u WHERE u.username = '" . mysql_real_escape_string($username) . "'");
 	$founduser = mysql_fetch_assoc($userquery);
@@ -488,6 +488,7 @@ function acceptedInvitation()
 		$project = $invitation['forproject'];
 		$userid = $founduser['id'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
+
 		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
 
 		// nastavit příznak ověření e-mailu
@@ -504,6 +505,9 @@ function acceptedInvitation()
 	}
 	else
 	{
+		if (!$caption) $caption = $username;
+		$email = $invitation['email'];
+
 		if ($password != $password2)
 		{
 			receivedInvitation($invitationCode, 'Zadaná hesla se navzájem liší');
@@ -525,9 +529,6 @@ function acceptedInvitation()
 			receivedInvitation($invitationCode, 'Vámi zadaný řetězec nevypadá jako Jabber ID');
 			return FALSE;
 		}
-
-		if (!$caption) $caption = $username;
-		$email = $invitation['email'];
 
 	    mysql_query("BEGIN");
 

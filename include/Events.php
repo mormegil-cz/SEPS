@@ -599,7 +599,7 @@ function newEventForm($date)
 
 function createNewEvent()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsLoggedUsername;
 
 	$atDate = getVariableOrNull('date');
 	$eventTitle = getVariableOrNull('title');
@@ -612,11 +612,13 @@ function createNewEvent()
 	mysql_query(
 		"INSERT INTO events (title, date, eventtype)
 			VALUES ('" . mysql_real_escape_string($eventTitle) . "', '" . strftime('%Y%m%d', $atDate) . "', " . $eventType . ")");
+
+	logMessage("Uživatel $sepsLoggedUsername založil na " . strftime('%Y%m%d', $atDate) . " událost '$eventTitle' typu #$eventType");
 }
 
 function deleteEvent($eid)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsLoggedUsername;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -636,6 +638,7 @@ function deleteEvent($eid)
 	$query = mysql_query("DELETE FROM events WHERE events.id=$eid AND NOT EXISTS (SELECT * FROM subscriptions s WHERE s.event=$eid) LIMIT 1");
 	if ($query && (mysql_affected_rows() > 0))
 	{
+	    logMessage("Uživatel $sepsLoggedUsername smazal událost #$eid");
 		echo '<div class="infomsg">Událost smazána</div>';
 	}
 	else
@@ -676,7 +679,7 @@ function changeGuestCount($eid, $guestcount)
 
 function changeDescription($eid, $description)
 {
-	global $sepsLoggedUser, $sepsDescriptionParser;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDescriptionParser;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -699,6 +702,7 @@ function changeDescription($eid, $description)
 
 	if ($query && (mysql_affected_rows() > 0))
 	{
+	    logMessage("Uživatel $sepsLoggedUsername upravil popis události #$eid");
 		echo '<div class="infomsg">Upravený popis uložen</div>';
 	}
 	else

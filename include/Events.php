@@ -567,7 +567,7 @@ function newEventForm($date)
 			FROM usersprojects up
 			INNER JOIN projects p ON up.project=p.id
 			INNER JOIN eventtypes t ON t.project=p.id
-			WHERE up.user=$sepsLoggedUser AND access>0
+			WHERE up.user=$sepsLoggedUser AND (up.access & " . sepsAccessFlagsCanCreateEvents . ") != 0
 			ORDER BY t.title");
 	while ($row = mysql_fetch_assoc($query))
 	{

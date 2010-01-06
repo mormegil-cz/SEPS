@@ -85,10 +85,12 @@ function eventTypesForm()
 		$editeventtype = getAndCheckEventType('editeventtype', $projectId);
 		$removeeventtype = getAndCheckEventType('removeeventtype', $projectId);
 
-		switch($eventTypeAction)
+		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
+			switch($eventTypeAction)
+			{
 			case 'add':
-				if (!$addcaption || $addminusers < 0 || $addmaxusers <= 0)
+				if (!$addcaption || $addminusers == null || $addmaxusers == null || $addminusers < 0 || $addmaxusers <= 0)
 				{
 					echo '<div class="errmsg">Je potřeba vyplnit název a limity na počet účastníků</div>';
 					break;
@@ -98,10 +100,16 @@ function eventTypesForm()
 					echo '<div class="errmsg">Minimum nemůže být vyšší než maximum</div>';
 					break;
 				}
+				if ($addmaxguests == null) $addmaxguests = 0;
 				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, $addmaxguests)"))
 				{
 					echo '<div class="infomsg">Nový typ vytvořen</div>';
 					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
+				}
+				else
+				{
+					echo "INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, $addmaxguests)";
+					echo mysql_error();
 				}
 				break;
 			case 'edit':
@@ -164,6 +172,7 @@ function eventTypesForm()
 				break;
 			default:
 				if (getVariableOrNull('doexecute')) echo '<div class="errmsg">Musíte vybrat operaci, která se má provést.</div>';
+			}
 		}
 
 		echo '<h2>Správa typů událostí projektu ' . htmlspecialchars($projectName) . '</h2>';

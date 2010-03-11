@@ -1,4 +1,4 @@
-a
+﻿a
 {
 	text-decoration: none;
 }
@@ -231,18 +231,18 @@ div.eventdetail div.parserhelpinfo
 	width: 80px;
 }
 
-div.eventdetail ul
+div.eventdetail ul.subscribers
 {
 	margin: 0 0 10px 0;
 	padding: 0;
 }
 
-div.eventdetail li
+div.eventdetail ul.subscribers li
 {
 	list-style-type: none;
 }
 
-div.eventdetail li.subscriber-ok
+div.eventdetail ul.subscribers li.subscriber-ok
 {
 /*
 	margin-left: -6px;
@@ -251,34 +251,34 @@ div.eventdetail li.subscriber-ok
 */
 }
 
-div.eventdetail li.subscriber-over
+div.eventdetail ul.subscribers li.subscriber-over
 {
 	margin-left: -6px;
 	padding-left: 4px;
 	border-left: 2px solid red;
 }
 
-div.eventdetail li.priority-20
+div.eventdetail ul.subscribers li.priority-20
 {
 	color: #040;
 }
 
-div.eventdetail li.priority-10
+div.eventdetail ul.subscribers li.priority-10
 {
 	color: #030;
 }
 
-div.eventdetail li.priority--20
+div.eventdetail ul.subscribers li.priority--20
 {
 	color: #400;
 }
 
-div.eventdetail li.priority-10
+div.eventdetail ul.subscribers li.priority-10
 {
 	color: #300;
 }
 
-div.eventdetail li.subscriber-over span.guests
+div.eventdetail ul.subscribers li.subscriber-over span.guests
 {
 	color: red;
 }

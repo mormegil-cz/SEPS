@@ -2,9 +2,10 @@
 
 function eventTypesForm()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsLoggedUsername;
 
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
+	generateCsrfToken();
 	$projectId = getVariableOrNull('project');
 	if (!is_numeric($projectId)) $projectId = null;
 	$projectName = null;
@@ -85,12 +86,10 @@ function eventTypesForm()
 		$editeventtype = getAndCheckEventType('editeventtype', $projectId);
 		$removeeventtype = getAndCheckEventType('removeeventtype', $projectId);
 
-		if ($_SERVER['REQUEST_METHOD'] == 'POST')
+		switch($eventTypeAction)
 		{
-			switch($eventTypeAction)
-			{
 			case 'add':
-				if (!$addcaption || $addminusers == null || $addmaxusers == null || $addminusers < 0 || $addmaxusers <= 0)
+				if (!$addcaption || $addminusers < 0 || $addmaxusers <= 0)
 				{
 					echo '<div class="errmsg">Je potřeba vyplnit název a limity na počet účastníků</div>';
 					break;
@@ -100,16 +99,11 @@ function eventTypesForm()
 					echo '<div class="errmsg">Minimum nemůže být vyšší než maximum</div>';
 					break;
 				}
-				if ($addmaxguests == null) $addmaxguests = 0;
-				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, $addmaxguests)"))
+				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, " . intval($addmaxguests) . ")"))
 				{
 					echo '<div class="infomsg">Nový typ vytvořen</div>';
 					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
-				}
-				else
-				{
-					echo "INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, $addmaxguests)";
-					echo mysql_error();
+					logMessage("Uživatel $sepsLoggedUsername založil nový typ události '$addcaption' v projektu $projectName");
 				}
 				break;
 			case 'edit':
@@ -153,6 +147,7 @@ function eventTypesForm()
 				{
 					echo '<div class="infomsg">Změny provedeny</div>';
 					$editcaption = $editminusers = $editmaxusers = $editmaxguests = null;
+					logMessage("Uživatel $sepsLoggedUsername upravil typ události #$editeventtype v projektu $projectName");
 				}
 				break;
 			case 'remove':
@@ -164,6 +159,7 @@ function eventTypesForm()
 				if (mysql_query("DELETE FROM eventtypes WHERE eventtypes.id=$removeeventtype AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=eventtypes.id) LIMIT 1") && (mysql_affected_rows() > 0))
 				{
 					echo '<div class="infomsg">Typ byl smazán.</div>';
+					logMessage("Uživatel $sepsLoggedUsername smazal typ události #$removeeventtype v projektu $projectName");
 				}
 				else
 				{
@@ -172,7 +168,6 @@ function eventTypesForm()
 				break;
 			default:
 				if (getVariableOrNull('doexecute')) echo '<div class="errmsg">Musíte vybrat operaci, která se má provést.</div>';
-			}
 		}
 
 		echo '<h2>Správa typů událostí projektu ' . htmlspecialchars($projectName) . '</h2>';

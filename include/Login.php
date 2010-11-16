@@ -5,6 +5,7 @@ function loginScreen()
 	global $sepsPageMessage;
 
 	echo '<div class="bigform login"><form action="?" method="post"><input type="hidden" name="action" value="login" />';
+	generateCsrfToken();
 	if (getVariableOrNull('noip')) echo '<input type="hidden" name="noipcheck" value="1" />';
 	echo '<label for="username">Uživatel:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
 	echo '<label for="password">Heslo:</label> <input type="password" id="password" name="password" /><br />';
@@ -21,6 +22,7 @@ function passwordResetForm($errmsg = null)
 	echo '<div class="bigform passwordreset">';
 	echo '<h2>Zapomenuté heslo</h2>';
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="sendpassreset" />';
+	generateCsrfToken();
 	if ($errmsg) echo "<div class='errmsg'>$errmsg</div>";
 	echo '<div><small class="formhelp">Pokud jste zapomněli heslo, vyplňte své uživatelské jméno, nebo registrovaný e-mail a stiskněte tlačítko. Na váš e-mail bude doručena zpráva s dalšími pokyny.</small></div>';
 	echo '<label for="username">Uživatelské jméno:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
@@ -111,11 +113,11 @@ function performLogin()
 
 function loadLoggedUserInformation()
 {
-	global $sepsLoggedUser, $sepsLoggedUsername, $sepsLoggedUserHasUnvalidatedEmail, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsLoggedUserHasUnvalidatedEmail, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsLoggedUserGlobalRights;
 
 	if (!$sepsLoggedUser) return;
 
-	$query = mysql_query("SELECT u.caption, u.username, u.email, u.emailvalidated FROM users u WHERE u.id=$sepsLoggedUser");
+	$query = mysql_query("SELECT u.caption, u.username, u.email, u.emailvalidated, u.globalrights FROM users u WHERE u.id=$sepsLoggedUser");
 	$row = mysql_fetch_assoc($query);
 	if (!$row)
 	{
@@ -127,6 +129,7 @@ function loadLoggedUserInformation()
 	$sepsLoggedUsername = $row['username'];
 	$sepsLoggedUserEmail = $row['emailvalidated'] ? $row['email'] : null;
 	$sepsLoggedUserHasUnvalidatedEmail = $row['email'] && !$sepsLoggedUserEmail;
+	$sepsLoggedUserGlobalRights = $row['globalrights'];
 
 	$query = mysql_query("SELECT BIT_OR(access) FROM usersprojects WHERE user=$sepsLoggedUser");
 	$access = mysql_fetch_row($query);
@@ -159,4 +162,23 @@ function tryApiLogin($username, $token)
 	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.apitoken='" . mysql_real_escape_string($token) . "'");
 	$row = mysql_fetch_row($query);
 	if ($row) return $row[0]; else return FALSE;
+}
+
+function generateCsrfToken()
+{
+	$token = generateRandomToken(10);
+	$_SESSION['csrftoken'] = $token;
+	echo "<input name='csrftoken' type='hidden' value='$token' />";
+}
+
+function verifyCsrfToken()
+{
+	$sessionToken = $_SESSION['csrftoken'];
+	$formToken = getVariableOrNull('csrftoken');
+	if ($sessionToken && $formToken && $formToken == $sessionToken) return true;
+
+	performLogout();
+	header('HTTP/1.1 403 Forbidden');
+	echo 'Invalid token';
+	return false;
 }

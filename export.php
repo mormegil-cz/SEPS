@@ -59,8 +59,6 @@ function getICalendar()
 	echoWrapped("X-WR-CALNAME:$sepsTitle\r\n", 75);
 	echoWrapped("X-WR-CALDESC:$sepsTitle\r\n", 75);
 
-	require_once('./include/Events.php');
-
 	$startDate = mktime()-86400;
 	$limit = 500;
 

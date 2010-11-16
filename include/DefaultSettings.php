@@ -1,14 +1,16 @@
 <?php
 
-$sepsSoftwareVersion = '0.1dev';
+$sepsSoftwareVersion = '0.2dev';
 $sepsSoftwareVersionLine = 'SEPS/' . $sepsSoftwareVersion;
 $sepsSoftwareVersionFpi = '-//mormegil.cz//NONSGML SEPS-' . $sepsSoftwareVersion . '//EN';
 $sepsSoftwareAboutLine = 'SEPS version ' . $sepsSoftwareVersion;
-$sepsSoftwareHomePage = 'https://opensvn.csie.org/traccgi/seps/';
+$sepsSoftwareHomePage = 'https://github.com/mormegil-cz/SEPS';
 
 $sepsTitle = '';
 $sepsSiteLogo = 'img/defaultlogo.png';
 $sepsFavicon = null;
+
+$sepsCountry = 'CZ';
 
 $sepsCalendarWeeks = 4;
 $sepsShowEmail = true;
@@ -17,8 +19,6 @@ $sepsShowSkypeStatus = true;
 $sepsShowJabberStatus = true;
 $sepsDefaultInvitationAccess = sepsAccessFlagsCanSee | sepsAccessFlagsHasAccess | sepsAccessFlagsCanSeeContacts | sepsAccessFlagsCanInvite;
 $sepsPasswordHashingAlgorithm = 'sha256';
-
-$sepsadminEnable = false;
 
 $sepsDescriptionParser = 'htmlspecialchars';
 $sepsDescriptionParserHelp = null;

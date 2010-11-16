@@ -4,6 +4,7 @@ function displayUserSettingsForm($username, $usercaption, $firstname, $lastname,
 {
 	echo '<div class="bottomform usersettings">';
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="savesettings" />';
+	generateCsrfToken();
 	echo '<input type="hidden" name="currusername" value="' . htmlspecialchars($currUsername) . '" />';
 	echo '<input type="hidden" name="currusercaption" value="' . htmlspecialchars($currUsercaption) . '" />';
 	echo '<input type="hidden" name="currfirstname" value="' . htmlspecialchars($currFirstname) . '" />';
@@ -39,6 +40,7 @@ function displayUserSettingsForm($username, $usercaption, $firstname, $lastname,
 		echo '<h3>Ověření e-mailové adresy</h3>';
 		echo '<p><small class="formhelp">Vámi zadaná e-mailová adresa dosud nebyla ověřena. Podívejte se do své schránky, zda vám přišel potvrzovací e-mail a pokračujte podle pokynů v něm. Případně si můžete nechat zaslat nové potvrzení:</small></p>';
 		echo '<form action="?" method="post"><input type="hidden" name="action" value="sendemailconfirmation" />';
+		generateCsrfToken();
 		echo '<input type="submit" value="Poslat nový potvrzovací e-mail" />';
 		echo '</form>';
 	}

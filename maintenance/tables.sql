@@ -42,6 +42,7 @@ CREATE TABLE users (
   skype VARCHAR(100) NOT NULL DEFAULT '',
   emailvalidated TINYINT UNSIGNED NOT NULL DEFAULT 0,
   apitoken VARCHAR(32) BINARY,
+  globalrights INTEGER UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   CONSTRAINT UN_users_username UNIQUE INDEX UN_users_username(username),
   INDEX IX_users_email(email)
@@ -90,4 +91,14 @@ CREATE TABLE logs (
   entry VARCHAR(512) NOT NULL,
   PRIMARY KEY (id),
   INDEX IX_log_timestamp (timestamp)
+);
+
+CREATE TABLE holidays (
+  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  country CHAR(2) BINARY NOT NULL,
+  day SMALLINT UNSIGNED NOT NULL,
+  fromyear SMALLINT UNSIGNED NOT NULL,
+  toyear SMALLINT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  INDEX IX_holidays_country (country, toyear)
 );

@@ -1,5 +1,7 @@
 <?php
 
+require_once('./include/HolidayCalendar.php');
+
 class Subscriber
 {
 	var $m_UserID;
@@ -335,7 +337,7 @@ function getEventList($fromdate, $limit)
 
 function printEventsCalendar($showSelectedDate)
 {
-	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess;
+	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess, $sepsCountry;
 
 	echo '<div class="calendar"><table class="calendar"><caption>Kalendář plánovaných akcí</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
@@ -349,6 +351,8 @@ function printEventsCalendar($showSelectedDate)
 	$startDateArray = getdate($startDate);
 	$startMonday = 86400 * floor($startDate / 86400 - (7 + $startDateArray['wday'] - 1) % 7);
 
+	$holidays = new HolidayCalendar($sepsCountry);
+	
 	$date = $startMonday;
 	for ($week = 0; $week < $sepsCalendarWeeks; $week++)
 	{
@@ -358,7 +362,7 @@ function printEventsCalendar($showSelectedDate)
 			$events = findEvents($date);
 
 			$dateStr = strftime('%d.&nbsp;%m.', $date);
-			$dayClass = $weekDay >= 5 ? 'holiday' : 'day';
+			$dayClass = $holidays->isHoliday($date, $weekDay) ? 'holiday' : 'day';
 			$dayClass .= $date < $today ? ' past' : ' future';
 			if ($dateStr == $todayStr) $dayClass .= ' today';
 			if ($showSelectedDate && $dateStr == $selectedStr) $dayClass .= ' selected';
@@ -416,6 +420,7 @@ function printEventDetails($eid)
 		$description = $event->getDescription();
 		echo '<div class="eventdescription">';
 		echo '<form action="?" method="POST"><input type="hidden" name="action" value="savedescription" />';
+		generateCsrfToken();
 		echo "<input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
 		echo '<textarea rows="5" cols="25" name="description">';
 		echo htmlspecialchars($description);
@@ -473,6 +478,7 @@ function printEventDetails($eid)
 			if ($thisIsCurrentUser && $maxguests)
 			{
 				echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' /><input type='hidden' name='action' value='changeguests' />";
+				generateCsrfToken();
 			}
 
 			echo $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts);
@@ -496,6 +502,7 @@ function printEventDetails($eid)
 	if ($access & sepsAccessFlagsHasAccess)
 	{
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
+		generateCsrfToken();
 		if ($isSubscribed)
 			echo '<input type="hidden" name="action" value="unsubscribe" /><input type="submit" value="Odhlásit se" />';
 		else
@@ -510,6 +517,7 @@ function printEventDetails($eid)
 	if (($access & sepsAccessFlagsCanDeleteEvents) && ($eventSubscriberCount == 0))
 	{
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
+		generateCsrfToken();
 		echo '<input type="hidden" name="action" value="deleteevent" /><input type="submit" onclick="return confirm(\'Určitě chcete zrušit tuto akci?\')" value="Zrušit akci" />';
 		echo '</form>';
 	}
@@ -579,6 +587,7 @@ function newEventForm($date)
 	{
 		echo "<h2>Nová událost na " . strftime('%d.&nbsp;%m.&nbsp;%Y', $date) . "</h2>";
 		echo "<form action='?' method='post'><input type='hidden' name='action' value='createevent' /><input type='hidden' name='date' value='$date' />";
+		generateCsrfToken();
 		echo "Nadpis: <input type='text' name='title' /><br />";
 
 		echo 'Typ události: <select name="eventtype">';
@@ -592,7 +601,7 @@ function newEventForm($date)
 	}
 	else
 	{
-		echo '<div class="errmsg">Nemáte oprávnění pro zakládání nových událostí</div>';
+		echo '<div class="errmsg">Nelze založit novou událost, jsou definovány nějaké typy?</div>';
 	}
 	echo '</div>';
 }

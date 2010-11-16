@@ -24,3 +24,14 @@ define('sepsEmailCodeLength', 25);
 define('sepsEmailCodeProjectInvitation', 1);
 define('sepsEmailCodeEmailConfirmation', 2);
 define('sepsEmailCodePasswordReset', 3);
+
+define('sepsGlobalAccessFlagsCanCreateProjects', 0x0001);
+define('sepsGlobalAccessFlagsCanDeleteProjects', 0x0002);
+define('sepsGlobalAccessFlagsCanManageGlobalPermissions', 0x0004);
+define('sepsGlobalAccessFlagsCanSendGlobalWebMessages', 0x0008);
+define('sepsGlobalAccessFlagsCanSendGlobalMailMessages', 0x0010);
+define('sepsGlobalAccessFlagsCanViewLog', 0x0020);
+
+define('sepsGlobalAccessMaxValidBit', 0x0020);
+
+$sepsGlobalAccessFlagNames = array('Zakládat projekty', 'Rušit projekty', 'Spravovat globální práva', 'Přidávat globální zprávy na web', 'Posílat globální zprávy e-mailem', 'Prohlížet si log');

@@ -8,9 +8,14 @@ require_once('./include/Setup.php');
 require_once('./include/Login.php');
 require_once('./include/Invitations.php');
 
+if ($_SERVER['REQUEST_METHOD'] == 'POST')
+{
+	if (!verifyCsrfToken()) die();
+}
+
 function mainPageContents()
 {
-	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser, $sepsadminEnable;
+	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser, $sepsLoggedUserGlobalRights;
 
 	$invitation = getVariableOrNull('inv');
 	if ($invitation)
@@ -75,42 +80,53 @@ function mainPageContents()
 		require_once('./include/News.php');
 		require_once('./include/UserSettings.php');
 		require_once('./include/UserManagement.php');
+		require_once('./include/Administration.php');
 
-		if ($sepsadminEnable)
+		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
-			include('./include/Administration.php');
-			globalAdministration();
+			if ($action == 'createevent')
+			{
+				createNewEvent();
+			}
+			else if ($action == 'deleteevent')
+			{
+				deleteEvent(getVariableOrNull('eid'));
+			}
+			else if ($action == 'savedescription')
+			{
+				changeDescription(getVariableOrNull('eid'), getVariableOrNull('description'));
+			}
+			else if ($action == 'sendinvitation')
+			{
+				sendInvitation();
+			}
+			else if ($action == 'createuser')
+			{
+				createNewUser();
+			}
+			else if ($action == 'sendemailconfirmation')
+			{
+				sendVerificationEmail();
+			}
+			else if ($action == 'savesettings')
+			{
+				saveUserSettings();
+			}
+			else if ($action == 'createproject')
+			{
+				createProject();
+			}
+			else if ($action == 'removeproject')
+			{
+				deleteProject();
+			}
+			else if ($action == 'changeglobalpermissions')
+			{
+				changeGlobalPermissions();
+			}
 		}
 
-		if ($action == 'createevent')
-		{
-			createNewEvent();
-		}
-		else if ($action == 'deleteevent')
-		{
-			deleteEvent(getVariableOrNull('eid'));
-		}
-		else if ($action == 'savedescription')
-		{
-			changeDescription(getVariableOrNull('eid'), getVariableOrNull('description'));
-		}
-		else if ($action == 'sendinvitation')
-		{
-			sendInvitation();
-		}
-		else if ($action == 'createuser')
-		{
-			createNewUser();
-		}
-		else if ($action == 'sendemailconfirmation')
-		{
-			sendVerificationEmail();
-		}
-		else if ($action == 'savesettings')
-		{
-			saveUserSettings();
-		}
-		else if ($action == 'eventlist')
+		if ($action == 'eventlist')
 		{
 			require_once('./include/EventList.php');
 			showEventList();
@@ -118,7 +134,7 @@ function mainPageContents()
 		else if ($action == 'export' || $action == 'genapitoken')
 		{
 			require_once('./include/ExportMenu.php');
-			if ($action == 'genapitoken')
+			if ($action == 'genapitoken' && $_SERVER['REQUEST_METHOD'] == 'POST')
 			{
 				generateApiToken();
 			}
@@ -162,6 +178,7 @@ function mainPageContents()
 		}
 		else if ($action == 'messaging')
 		{
+			// messaging();
 		}
 		else if ($action == 'manageusers')
 		{
@@ -181,6 +198,22 @@ function mainPageContents()
 			require_once('./include/Logging.php');
 			display_log();
 		}
+		else if ($action == 'newproject')
+		{
+			projectCreationForm();
+		}
+		else if ($action == 'deleteproject')
+		{
+			projectDeletionForm();
+		}
+		else if ($action == 'manageglobalpermissions')
+		{
+			manageGlobalPermissionsForm();
+		}
+		else if ($action == 'globalmessaging')
+		{
+			// globalMessaging();
+		}
 
 		echo '<br class="cleaner" />';
 
@@ -192,6 +225,11 @@ function mainPageContents()
 		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
 		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
+		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects) $menu[] = array('?action=newproject', 'Založit nový projekt');
+		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects) $menu[] = array('?action=deleteproject', 'Zrušit projekt');
+		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions) $menu[] = array('?action=manageglobalpermissions', 'Spravovat globální práva');
+		if ($sepsLoggedUserGlobalRights & (sepsGlobalAccessFlagsCanSendGlobalWebMessages | sepsGlobalAccessFlagsCanSendGlobalMailMessages)) $menu[] = array('?action=globalmessaging', 'Poslat globální zprávu');
+		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanViewLog) $menu[] = array('?action=viewlog', 'Log');
 		$menu[] = array('?action=export', 'Export');
 		$menu[] = array('?action=settings', 'Nastavení');
 		$menu[] = array('?action=logout', 'Odhlásit se');

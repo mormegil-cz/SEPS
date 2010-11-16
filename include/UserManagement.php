@@ -7,6 +7,7 @@ function manageUsersForm()
 	global $sepsLoggedUser, $sepsAccessFlagNames, $sepsLoggedUserCaption;
 
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="manageusers" />';
+	generateCsrfToken();
 	$projectId = getVariableOrNull('project');
 	if (!is_numeric($projectId)) $projectId = null;
 	$projectName = null;
@@ -235,6 +236,7 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 		echo "<div class='errmsg'>$errormessage</div>";
 	}
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="createuser" />';
+	generateCsrfToken();
 	$projectId = getVariableOrNull('project');
 	if (!is_numeric($projectId)) $projectId = null;
 	$projectName = null;

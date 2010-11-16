@@ -13,3 +13,8 @@ function initDatabase()
 	}
 	mysql_query("SET NAMES 'utf8'");
 }
+
+function report_mysql_error()
+{
+	echo '<div class="errmsg">' . htmlspecialchars(mysql_error()) . '</div>';
+}

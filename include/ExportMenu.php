@@ -2,9 +2,16 @@
 
 function showExportLink($caption, $token, $type, $params = '')
 {
-	global $sepsLoggedUsername;
-    $link = "export.php/calendar.$type?user=$sepsLoggedUsername&token=$token&req=$type&$params";
-	echo '<li><a href="' . htmlspecialchars($link) . '">' . htmlspecialchars($caption) . '</a></li>';
+	global $sepsLoggedUsername, $sepsBaseUri;
+    $link = "export.php/calendar.$type?user=$sepsLoggedUsername&token=$token&req=$type";
+	if ($params) $link .= '&' . $params;
+	echo '<li><a href="' . htmlspecialchars($link) . '">' . htmlspecialchars($caption) . '</a>';
+	if ($type == 'ics')
+	{
+		$url = rawurlencode($sepsBaseUri . $link);
+		echo " <a href='http://www.google.com/calendar/render?cid=$url'><img src='http://www.google.com/calendar/images/ext/gc_button1.gif' alt='Přidat do Google Calendar'></a>";
+	}
+	echo '</li>';
 }
 
 function showExportMenu()
@@ -26,14 +33,18 @@ function showExportMenu()
 		// nabídnout přegenerování API klíče
 		echo '<h4>Přegenerování klíče</h4>';
 		echo '<p>Pokud chcete, můžete zneplatit původní exportovací odkazy a nechat si vygenerovat nové:</p>';
-		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat nové" /></form>';
+		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat nové" />';
+		generateCsrfToken();
+		echo '</form>';
 	}
 	else
 	{
 		// nabídnout vygenerování API klíče
 		echo '<h3>Vygenerování exportního klíče</h3>';
 		echo '<p>Zde máte možnost si kalendář vyexportovat, abyste ho mohli použít v jiných aplikacích (např. Google Calendar). Pro používání exportu si však nejprve musíte nechat vygenerovat unikátní klíč. Pokud tedy budete chtít používat export, stiskněte následující tlačítko.</p>';
-		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat klíč" /></form>';
+		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat klíč" />';
+		generateCsrfToken();
+		echo '</form>';
 	}
 	echo '</div>';
 }

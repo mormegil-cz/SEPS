@@ -1,10 +1,11 @@
 <?php
 
-$sepsFullBaseUri = 'http://localhost/seps/index.php';
+$sepsBaseUri = 'http://localhost/seps/';
+$sepsFullBaseUri = "${sepsBaseUri}index.php";
 $sepsTitle = 'Volejbal';
 $sepsSiteLogo = 'img/logo.png';
 
-$sepsDbServer = 'localhost';
+$sepsDbServer = '127.0.0.1';
 $sepsDbUser = 'root';
 $sepsDbPassword = 'heslo';
 $sepsDbDatabase = 'seps';
@@ -12,3 +13,4 @@ $sepsDbDatabase = 'seps';
 $sepsAdminMail = 'petrk@alsoft.cz';
 
 $sepsShowIcqStatus = false;
+$sepsCountry = 'CZ';

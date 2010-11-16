@@ -100,6 +100,7 @@ function invitationForm()
 	echo '<div class="bottomform invitation">';
 	echo '<h2>Poslat pozvánku novému uživateli</h2>';
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="sendinvitation" />';
+	generateCsrfToken();
 
 	echo '<label for="project">Projekt, do kterého chcete uživatele pozvat:</label> <select name="project" id="project" />';
 	$query = mysql_query(
@@ -310,6 +311,7 @@ function receivedProjectInvitation($invitationCode, $errormessage)
 		echo 'Získali jste pozvánku do projektu <i>' . htmlspecialchars($data['project']) . '</i> od uživatele <i>' . htmlspecialchars($data['user']) . '</i>. Pokud ji chcete přijmout a připojit se k tomuto projektu, vyplňte následující formulář:';
 	}
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="acceptedinvitation" /><input type="hidden" name="invitation" value="' . $invitationCode . '" />';
+	generateCsrfToken();
 	echo '<h3>Základní údaje</h3>';
 	echo '<small class="formhelp">Pokud zde dosud nemáte založen účet, zvolte si přihlašovací jméno a heslo. Pokud již na tomto serveru účet máte, zadejte své existující jméno a heslo (stačí jednou).</small>';
 	echo '<div class="formblock">';
@@ -380,6 +382,7 @@ function receivedPasswordReset($invitationCode, $username, $errormessage)
 		echo 'Nyní můžete uživateli <i>' . htmlspecialchars($username) . '</i> nastavit nové heslo.';
 	}
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="dopasswordreset" /><input type="hidden" name="invitation" value="' . $invitationCode . '" /><input type="hidden" name="username" value="' . htmlspecialchars($username) . '" />';
+	generateCsrfToken();
 	echo '<label for="password">Nové heslo:</label> <input class="required" type="password" name="password" id="password" /><br />';
 	echo '<label for="password2">Heslo znovu:</label> <input class="required" type="password" name="password2" id="password2" /><br />';
 

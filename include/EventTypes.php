@@ -102,8 +102,8 @@ function eventTypesForm()
 				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, " . intval($addmaxguests) . ")"))
 				{
 					echo '<div class="infomsg">Nový typ vytvořen</div>';
-					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
 					logMessage("Uživatel $sepsLoggedUsername založil nový typ události '$addcaption' v projektu $projectName");
+					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
 				}
 				break;
 			case 'edit':
@@ -146,8 +146,8 @@ function eventTypesForm()
 				if ($changes)
 				{
 					echo '<div class="infomsg">Změny provedeny</div>';
-					$editcaption = $editminusers = $editmaxusers = $editmaxguests = null;
 					logMessage("Uživatel $sepsLoggedUsername upravil typ události #$editeventtype v projektu $projectName");
+					$editcaption = $editminusers = $editmaxusers = $editmaxguests = null;
 				}
 				break;
 			case 'remove':

@@ -621,6 +621,11 @@ function createNewEvent()
 	mysql_query(
 		"INSERT INTO events (title, date, eventtype)
 			VALUES ('" . mysql_real_escape_string($eventTitle) . "', '" . strftime('%Y%m%d', $atDate) . "', " . $eventType . ")");
+	if (mysql_affected_rows() != 1)
+	{
+		report_mysql_error();
+		return;
+	}
 
 	logMessage("Uživatel $sepsLoggedUsername založil na " . strftime('%Y%m%d', $atDate) . " událost '$eventTitle' typu #$eventType");
 }

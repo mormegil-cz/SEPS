@@ -166,8 +166,18 @@ function tryApiLogin($username, $token)
 
 function generateCsrfToken()
 {
-	$token = generateRandomToken(10);
-	$_SESSION['csrftoken'] = $token;
+	global $sepsCsrfToken;
+	if (isset($sepsCsrfToken))
+	{
+		if ($_SESSION['csrftoken'] != $sepsCsrfToken) die('Unexpected token value');
+		$token = $sepsCsrfToken;
+	}
+	else
+	{
+		$token = generateRandomToken(10);
+		$_SESSION['csrftoken'] = $token;
+		$sepsCsrfToken = $token;
+	}
 	echo "<input name='csrftoken' type='hidden' value='$token' />";
 }
 

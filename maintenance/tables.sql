@@ -61,13 +61,24 @@ CREATE TABLE usersprojects (
 CREATE TABLE subscriptions (
   user INTEGER UNSIGNED NOT NULL,
   event INTEGER UNSIGNED NOT NULL,
-  subscribed DATETIME NOT NULL,
+  timestamp DATETIME NOT NULL,
   priority SMALLINT NOT NULL DEFAULT 0,
   guests INTEGER UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (user, event),
   CONSTRAINT FK_subscriptions_users FOREIGN KEY FK_subscriptions_users (user) REFERENCES users (id),
   CONSTRAINT FK_subscriptions_events FOREIGN KEY FK_subscriptions_events (event) REFERENCES events (id),
-  INDEX IX_subscriptions_event_priority_subscribed(event, priority, subscribed)
+  INDEX IX_subscriptions_event_priority_timestamp(event, priority, timestamp)
+);
+
+CREATE TABLE rejections (
+  user INTEGER UNSIGNED NOT NULL,
+  event INTEGER UNSIGNED NOT NULL,
+  timestamp DATETIME NOT NULL,
+  comment BLOB NULL,
+  PRIMARY KEY (user, event),
+  CONSTRAINT FK_rejections_users FOREIGN KEY FK_rejections_users (user) REFERENCES users (id),
+  CONSTRAINT FK_rejections_events FOREIGN KEY FK_rejections_events (event) REFERENCES events (id),
+  INDEX IX_rejections_event_timestamp(event, timestamp)
 );
 
 CREATE TABLE emailcodes (

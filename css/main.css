@@ -268,22 +268,22 @@ div.eventdetail li.subscriber-over
 
 div.eventdetail li.priority-20
 {
-	color: #040;
+	color: #060;
 }
 
 div.eventdetail li.priority-10
 {
-	color: #030;
+	color: #040;
 }
 
 div.eventdetail li.priority--20
 {
-	color: #400;
+	color: #600;
 }
 
-div.eventdetail li.priority-10
+div.eventdetail li.priority--10
 {
-	color: #300;
+	color: #400;
 }
 
 div.eventdetail li.subscriber-over span.guests
@@ -305,6 +305,19 @@ p.nosubscribers
 {
 	font-style: italic;
 	margin: 1em 0;
+}
+
+div.rejecters
+{
+	border: 1px dotted gray;
+	margin-bottom: 0.5em;
+	padding: 0.5em;
+}
+
+p.rejecterscaption
+{
+	font-style: italic;
+	margin-top: 0;
 }
 
 div.bottomform

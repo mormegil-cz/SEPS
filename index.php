@@ -154,6 +154,10 @@ function mainPageContents()
 			{
 				unsubscribeFromEvent($selectedEvent);
 			}
+			else if ($action == 'rejectevent')
+			{
+				rejectEvent($selectedEvent);
+			}
 			else if ($action == 'changeguests')
 			{
 				changeGuestCount($selectedEvent, getVariableOrNull('guestcount'));

@@ -232,7 +232,7 @@ class Event
 			INNER JOIN eventtypes t ON e.eventtype=t.id
 			INNER JOIN usersprojects up ON up.user=u.id AND up.project=t.project
 			WHERE s.event=$eid
-			ORDER BY up.priority+s.priority DESC, s.subscribed ASC");
+			ORDER BY up.priority+s.priority DESC, s.timestamp ASC");
 		if (!$query) return null;
 		$result = array();
 		while ($row = mysql_fetch_assoc($query))
@@ -242,6 +242,24 @@ class Event
 		return $result;
 	}
 
+	function getListOfRejects()
+	{
+		$eid = $this->m_ID;
+		$query = mysql_query(
+			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, r.comment
+			FROM rejections r
+			INNER JOIN users u ON r.user=u.id
+			WHERE r.event=$eid
+			ORDER BY r.timestamp ASC");
+		if (!$query) return null;
+		$result = array();
+		while ($row = mysql_fetch_assoc($query))
+		{
+			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], 0, 0);
+		}
+		return $result;
+	}
+	
 	function getUserAccessAndPriority($userid)
 	{
 		$eventid = $this->m_ID;
@@ -414,7 +432,7 @@ function printEventDetails($eid)
 	echo '<div class="eventdetail">';
 	echo '<h2>' . htmlspecialchars($event->getTitle()) . ' ' . strftime('%d.&nbsp;%m.&nbsp;%Y', $eventdate) . '</h2>';
 
-	if (getVariableOrNull('action') == 'editdescription' && $access & sepsAccessFlagsCanCreateEvents)
+	if (getVariableOrNull('action') == 'editdescription' && $access & sepsAccessFlagsCanEditEventDescription)
 	{
 		global $sepsDescriptionParserHelp;
 		$description = $event->getDescription();
@@ -499,33 +517,58 @@ function printEventDetails($eid)
 		echo '<p class="nosubscribers">Na tuto událost se dosud nikdo nepřihlásil.</p>';
 	}
 
+	$hasRejected = false;
+	$rejects = $event->getListOfRejects();
+	if (count($rejects))
+	{
+		echo '<div class="rejecters"><p class="rejecterscaption">Tito uživatelé se akce nezúčastní:</p>';
+		foreach($rejects as $subscriber)
+		{
+			if (!$isSubscribed && !$hasRejected && $subscriber->getUserID() == $sepsLoggedUser)
+			{
+				$thisIsCurrentUser = true;
+				$hasRejected = true;
+			}
+
+			echo '<li class="rejecter">';
+			echo $subscriber->getUserLine($access & sepsAccessFlagsCanSeeContacts);
+			echo '</li>';
+		}
+		echo '</div>';
+	}
+	
 	if ($access & sepsAccessFlagsHasAccess)
 	{
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
 		generateCsrfToken();
 		if ($isSubscribed)
-			echo '<input type="hidden" name="action" value="unsubscribe" /><input type="submit" value="Odhlásit se" />';
+			echo '<button name="action" value="unsubscribe">Odhlásit se</button>';
+		else if ($hasRejected)
+			echo '<button name="action" value="unsubscribe">Odvolat neúčast</button>';
 		else
 		{
-			echo '<input type="hidden" name="action" value="subscribe" /><input type="submit" value="Přihlásit se" ';
+			echo '<button name="action" value="subscribe" ';
 			if ($eventSubscriberWithPriorityCount >= $eventCapacity) echo 'onclick="return confirm(\'Událost je již zaplněna. Chcete se přesto přihlásit?\')" ';
 			elseif ($eventSubscriberCount >= $eventCapacity) echo 'onclick="return confirm(\'Svým přihlášením vyřadíte uživatele s nižší prioritou. Chcete se přesto přihlásit?\')" ';
-			echo '/>';
+			echo '/>Zúčastním se</button><button name="action" value="rejectevent">Nezúčastním se</button>';
 		}
 		echo '</form>';
 	}
-	if (($access & sepsAccessFlagsCanDeleteEvents) && ($eventSubscriberCount == 0))
+	if ($access & sepsAccessFlagsCanDeleteEvents)
 	{
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
 		generateCsrfToken();
-		echo '<input type="hidden" name="action" value="deleteevent" /><input type="submit" onclick="return confirm(\'Určitě chcete zrušit tuto akci?\')" value="Zrušit akci" />';
+		$text = $eventSubscriberCount > 0
+					? 'Pozor! Na akci už je někdo přihlášen! Určitě chcete odhlásit všechny účastníky a zrušit tuto akci?'
+					: 'Určitě chcete zrušit tuto akci?';
+		echo '<input type="hidden" name="action" value="deleteevent" /><input type="submit" onclick="return confirm(\'' . $text . '\')" value="Zrušit akci" />';
 		echo '</form>';
 	}
 
 	echo '</div>';
 }
 
-function subscribeToEvent($eid)
+function insertToSubscriptionsOrRejections($eid, $tablename)
 {
 	global $sepsLoggedUser;
 
@@ -538,13 +581,23 @@ function subscribeToEvent($eid)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsHasAccess)) return;
 
-	$query = mysql_query("SELECT COUNT(*) FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid");
+	$query = mysql_query("SELECT COUNT(*) FROM events e LEFT JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser LEFT JOIN rejections r ON r.event=e.id AND r.user=$sepsLoggedUser WHERE e.id=$eid AND s.event IS NOT NULL OR r.event IS NOT NULL");
 	$result = mysql_fetch_row($query);
 	if ($result[0] == 0)
 	{
 		$currdate = strftime('%Y-%m-%d %H:%M:%S');
-		mysql_query("INSERT INTO subscriptions(user, event, subscribed) VALUES ($sepsLoggedUser, $eid, '$currdate')");
+		mysql_query("INSERT INTO $tablename(user, event, timestamp) VALUES ($sepsLoggedUser, $eid, '$currdate')");
 	}
+}
+
+function subscribeToEvent($eid)
+{
+	insertToSubscriptionsOrRejections($eid, 'subscriptions');
+}
+
+function rejectEvent($eid)
+{
+	insertToSubscriptionsOrRejections($eid, 'rejections');
 }
 
 function unsubscribeFromEvent($eid)
@@ -561,6 +614,7 @@ function unsubscribeFromEvent($eid)
 	if (!($access & sepsAccessFlagsHasAccess)) return;
 
 	mysql_query("DELETE FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	mysql_query("DELETE FROM rejections WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
 }
 
 function newEventForm($date)
@@ -643,20 +697,19 @@ function deleteEvent($eid)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsCanDeleteEvents)) return;
 
-	if ($event->getSubscriberCount() > 0)
-	{
-		echo '<div class="errmsg">Tuto událost nelze smazat, neboť jsou na ni stále přihlášeni uživatelé</div>';
-		return;
-	}
-
-	$query = mysql_query("DELETE FROM events WHERE events.id=$eid AND NOT EXISTS (SELECT * FROM subscriptions s WHERE s.event=$eid) LIMIT 1");
+	mysql_query('BEGIN');
+	mysql_query("DELETE FROM subscriptions WHERE event=$eid");
+	mysql_query("DELETE FROM rejections WHERE event=$eid");
+	$query = mysql_query("DELETE FROM events WHERE events.id=$eid LIMIT 1");
 	if ($query && (mysql_affected_rows() > 0))
 	{
 	    logMessage("Uživatel $sepsLoggedUsername smazal událost #$eid");
+		mysql_query('COMMIT');
 		echo '<div class="infomsg">Událost smazána</div>';
 	}
 	else
 	{
+		mysql_query('ROLLBACK');
 		echo '<div class="errmsg">Nelze smazat událost</div>';
 	}
 }
@@ -702,7 +755,7 @@ function changeDescription($eid, $description)
 	// if ($event->getDate();
 
 	$access = $event->getUserAccess($sepsLoggedUser);
-	if (!($access & sepsAccessFlagsCanCreateEvents)) return;
+	if (!($access & sepsAccessFlagsCanEditEventDescription)) return;
 
 	$descriptionhtml = $sepsDescriptionParser($description);
 	if ($descriptionhtml === false)

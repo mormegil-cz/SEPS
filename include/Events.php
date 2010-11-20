@@ -454,7 +454,7 @@ function printEventDetails($eid)
 	else
 	{
 		$description = $event->getDescriptionHtml();
-		$descriptionEditLink = ($access & sepsAccessFlagsCanCreateEvents) ? "<div class='editlink'><a href='?action=editdescription&amp;eid=$eid&amp;date=$eventdate'>[E]</a></div>" : '';
+		$descriptionEditLink = ($access & sepsAccessFlagsCanEditEventDescription) ? "<div class='editlink'><a href='?action=editdescription&amp;eid=$eid&amp;date=$eventdate' title='Upravit popis události'>[E]</a></div>" : '';
 		if ($description)
 		{
 			echo '<div class="eventdescription">';

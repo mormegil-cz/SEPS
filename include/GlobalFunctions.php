@@ -8,8 +8,8 @@ function getSessionOrNull($varName)
 
 function getVariableOrNull($varName)
 {
-	if (isset($_GET[$varName])) return $_GET[$varName];
 	if (isset($_POST[$varName])) return $_POST[$varName];
+	if (isset($_GET[$varName])) return $_GET[$varName];
 	return null;
 }
 

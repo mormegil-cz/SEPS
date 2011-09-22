@@ -4,7 +4,7 @@ function loginScreen()
 {
 	global $sepsPageMessage;
 
-	echo '<div class="bigform login"><form action="?" method="post"><input type="hidden" name="action" value="login" />';
+	echo '<div class="bigform login"><form action="?' . htmlspecialchars($_SERVER['QUERY_STRING']) . '" method="post"><input type="hidden" name="action" value="login" />';
 	generateCsrfToken();
 	if (getVariableOrNull('noip')) echo '<input type="hidden" name="noipcheck" value="1" />';
 	echo '<label for="username">Uživatel:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
@@ -87,7 +87,7 @@ function performLogout()
 
 function performLogin()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $action;
 
 	performLogout();
 
@@ -103,11 +103,19 @@ function performLogin()
 		$_SESSION['loggeduser'] = $sepsLoggedUser;
 		if (getVariableOrNull('noipcheck')) $_SESSION['noipcheck'] = 1;
 		else $_SESSION['loginip'] = $_SERVER['REMOTE_ADDR'];
+
+		// fuj! záplata
+		if (isset($_GET['action']))
+		{
+			$getaction = $_GET['action'];
+			if ($getaction && $getaction != 'logout') $action = $getaction;
+		}
 	}
 	else
 	{
 		global $sepsPageMessage;
 		$sepsPageMessage = 'Chybné jméno nebo heslo. Zkuste to znovu.';
+		return false;
 	}
 }
 

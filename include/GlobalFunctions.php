@@ -60,8 +60,15 @@ function generateRandomToken($len)
 
 function echoWrapped($text, $wrapColumn, $wrappedPrefix = ' ')
 {
+	// TODO: echoWrapped
 	echo $text;
 	// echo trim(chunk_split($text, $wrapColumn, "\r\n$wrappedPrefix"));
+}
+
+function escapeQuotedString($text)
+{
+	// TODO: escapeQuotedString
+	return $text;
 }
 
 if (function_exists('imap_8bit'))

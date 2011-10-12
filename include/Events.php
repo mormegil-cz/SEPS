@@ -353,6 +353,27 @@ function getEventList($fromdate, $limit)
 	return $result;
 }
 
+function getMyEventList($fromdate, $limit)
+{
+	global $sepsLoggedUser;
+
+	$query = mysql_query(
+		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests,
+				(SELECT COUNT(*) + SUM(guests) FROM subscriptions sc WHERE sc.event=e.id) AS subscribercount
+		FROM events e
+		INNER JOIN eventtypes t ON e.eventtype=t.id
+		INNER JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser
+		WHERE e.date>=" . strftime('%Y%m%d', $fromdate) . " ORDER BY e.date LIMIT $limit");
+	if (!$query) return null;
+
+	$result = array();
+	while ($row = mysql_fetch_assoc($query))
+	{
+		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
+	}
+	return $result;
+}
+
 function printEventsCalendar($showSelectedDate)
 {
 	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess, $sepsCountry;

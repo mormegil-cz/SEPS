@@ -34,10 +34,12 @@ if (!$sepsLoggedUser)
 	return;
 }
 
+$onlyMine = getVariableOrNull('mine') == '1';
+
 switch($request)
 {
 	case 'ics':
-		getICalendar();
+		getICalendar($onlyMine);
 		break;
 	default:
 		header('HTTP/1.1 404 Not Found');
@@ -45,9 +47,9 @@ switch($request)
 		return;
 }
 
-function getICalendar()
+function getICalendar($onlyMine)
 {
-	global $sepsBaseUniqueAddress, $sepsSoftwareVersionFpi;
+	global $sepsBaseUniqueAddress, $sepsSoftwareVersionFpi, $sepsTitle;
 	require_once('./include/Events.php');
 
 	header('Content-Type: text/calendar; charset=utf-8');
@@ -62,7 +64,8 @@ function getICalendar()
 	$startDate = mktime()-86400;
 	$limit = 500;
 
-	foreach(getEventList($startDate, $limit) as $event)
+	$events = $onlyMine ? getMyEventList($startDate, $limit) : getEventList($startDate, $limit);
+	foreach($events as $event)
 	{
 		$eventId = $event->getUniqueId();
 		$eventDate = strtotime($event->getDate());
@@ -82,9 +85,16 @@ function getICalendar()
 		foreach($event->getListOfSubscribers() as $subscriber)
 		{
 			$guests = $subscriber->getGuests();
-			$subscriberName = $subscriber->getCaption();
+			$subscriberName = escapeQuotedString($subscriber->getCaption());
 			$subscriberUri = $subscriber->getUserUri();
-			echo "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=OPT-PARTICIPANT;PARTSTAT=ACCEPTED;X-NUM-GUESTS=$guests;CN=$subscriberName:$subscriberUri\r\n";
+			echo "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=OPT-PARTICIPANT;PARTSTAT=ACCEPTED;X-NUM-GUESTS=$guests;CN=\"$subscriberName\":$subscriberUri\r\n";
+		}
+
+		foreach($event->getListOfRejects() as $subscriber)
+		{
+			$subscriberName = escapeQuotedString($subscriber->getCaption());
+			$subscriberUri = $subscriber->getUserUri();
+			echo "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=OPT-PARTICIPANT;PARTSTAT=DECLINED;CN=\"$subscriberName\":$subscriberUri\r\n";
 		}
 
 		// CATEGORIES

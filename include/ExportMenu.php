@@ -9,7 +9,7 @@ function showExportLink($caption, $token, $type, $params = '')
 	if ($type == 'ics')
 	{
 		$url = rawurlencode($sepsBaseUri . $link);
-		echo " <a href='http://www.google.com/calendar/render?cid=$url'><img src='http://www.google.com/calendar/images/ext/gc_button1.gif' alt='Přidat do Google Calendar'></a>";
+		echo " <a href='http://www.google.com/calendar/render?cid=$url'><img src='http://www.google.com/calendar/images/ext/gc_button1_cs.gif' alt='Přidat do Kalendáře Google'></a>";
 	}
 	echo '</li>';
 }
@@ -27,7 +27,8 @@ function showExportMenu()
 		// zobrazit možnosti
 		echo '<h3>Možnosti exportu</h3>';
 		echo '<ul>';
-		showExportLink('iCalendar', $token, 'ics');
+		showExportLink('iCalendar (všechny události)', $token, 'ics');
+		showExportLink('iCalendar (jen moje)', $token, 'ics', 'mine=1');
 		echo '</ul>';
 
 		// nabídnout přegenerování API klíče

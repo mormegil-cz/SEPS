@@ -55,6 +55,11 @@ img
 	border: 0 none;
 }
 
+li img
+{
+	vertical-align: middle;
+}
+
 .infomsg
 {
 	clear: both;

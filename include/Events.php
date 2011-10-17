@@ -602,7 +602,7 @@ function insertToSubscriptionsOrRejections($eid, $tablename)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsHasAccess)) return;
 
-	$query = mysql_query("SELECT COUNT(*) FROM events e LEFT JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser LEFT JOIN rejections r ON r.event=e.id AND r.user=$sepsLoggedUser WHERE e.id=$eid AND s.event IS NOT NULL OR r.event IS NOT NULL");
+	$query = mysql_query("SELECT COUNT(*) FROM events e LEFT JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser LEFT JOIN rejections r ON r.event=e.id AND r.user=$sepsLoggedUser WHERE e.id=$eid AND (s.event IS NOT NULL OR r.event IS NOT NULL)");
 	$result = mysql_fetch_row($query);
 	if ($result[0] == 0)
 	{

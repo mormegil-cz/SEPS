@@ -563,7 +563,7 @@ function printEventDetails($eid)
 		echo "<form action='?' method='post'><input type='hidden' name='eid' value='$eid' /><input type='hidden' name='date' value='$eventdate' />";
 		generateCsrfToken();
 		if ($isSubscribed)
-			echo '<button name="action" value="unsubscribe">Odhlásit se</button>';
+			echo '<button name="action" value="unsubscribe">Odvolat účast</button>';
 		else if ($hasRejected)
 			echo '<button name="action" value="unsubscribe">Odvolat neúčast</button>';
 		else

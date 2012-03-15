@@ -41,6 +41,8 @@ class HolidayCalendar
 	
 	function computeHolidays($year)
 	{
+		$leapYear = (($year % 4) == 0) && ((($year % 100) != 0) || (($year % 400) == 0));
+
 		$easterDate = getdate(easter_date($year));
 		$easter = $easterDate['yday'];
 
@@ -58,7 +60,16 @@ class HolidayCalendar
 		}
 		while ($row = mysql_fetch_row($query))
 		{
-			$result[$row[0]] = true;
+			$day = $row[0];
+			if ($leapYear)
+			{
+				// Ugly bug workaround: Since we represent holiday dates using year-day ordinal numbers (which was a wrong decision),
+				// they are not fixed-calendar-date (e.g. 'May 1st'), but they move around on leap years.
+				// So we need to adjust them on leap years (with the special-case support for #366 == February 29th).
+				if ($day == 366) $day = 59;
+				else if ($day >= 59) ++$day;
+			}
+			$result[$day] = true;
 		}
 		return $result;
 	}

@@ -83,7 +83,7 @@ if (function_exists('imap_8bit'))
 	  // We also have to remove last unneeded \r\n :
 	  $string = substr($string, 0, strlen($string)-2);
 	  // replace newlines with encoding text "=?UTF ..."
-	  $string = str_replace("\r\n", "?=".HEAD_CRLF." =?".$encoding."?Q?", $string);
+	  $string = str_replace("\r\n", "?=\r\n =?".$encoding."?Q?", $string);
 
 	  return '=?'.$encoding.'?Q?'.$string.'?=';
 	}

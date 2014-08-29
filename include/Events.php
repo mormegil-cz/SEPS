@@ -12,8 +12,9 @@ class Subscriber
 	var $m_UserJabber;
 	var $m_Priority;
 	var $m_Guests;
+	var $m_Comment;
 
-	function __construct($userID, $userCaption, $userEmail, $userIcq, $userSkype, $userJabber, $priority, $guests)
+	function __construct($userID, $userCaption, $userEmail, $userIcq, $userSkype, $userJabber, $priority, $guests, $comment)
 	{
 		$this->m_UserID = $userID;
 		$this->m_UserCaption = $userCaption;
@@ -23,6 +24,7 @@ class Subscriber
 		$this->m_UserJabber = $userJabber;
 		$this->m_Priority = $priority;
 		$this->m_Guests = $guests;
+		$this->m_Comment = $comment;
 	}
 
 	function getUserLine($withContacts)
@@ -225,7 +227,7 @@ class Event
 	{
 		$eid = $this->m_ID;
 		$query = mysql_query(
-			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, (up.priority+s.priority) AS priority, s.guests
+			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, (up.priority+s.priority) AS priority, s.guests, s.comment
 			FROM subscriptions s
 			INNER JOIN users u ON s.user=u.id
 			INNER JOIN events e ON s.event=e.id
@@ -237,7 +239,7 @@ class Event
 		$result = array();
 		while ($row = mysql_fetch_assoc($query))
 		{
-			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], $row['priority'], $row['guests']);
+			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], $row['priority'], $row['guests'], $row['comment']);
 		}
 		return $result;
 	}
@@ -255,7 +257,7 @@ class Event
 		$result = array();
 		while ($row = mysql_fetch_assoc($query))
 		{
-			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], 0, 0);
+			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], 0, 0, $row['comment']);
 		}
 		return $result;
 	}

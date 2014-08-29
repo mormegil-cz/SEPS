@@ -64,6 +64,7 @@ CREATE TABLE subscriptions (
   timestamp DATETIME NOT NULL,
   priority SMALLINT NOT NULL DEFAULT 0,
   guests INTEGER UNSIGNED NOT NULL DEFAULT 0,
+  comment BLOB NULL,
   PRIMARY KEY (user, event),
   CONSTRAINT FK_subscriptions_users FOREIGN KEY FK_subscriptions_users (user) REFERENCES users (id),
   CONSTRAINT FK_subscriptions_events FOREIGN KEY FK_subscriptions_events (event) REFERENCES events (id),

@@ -278,6 +278,7 @@ echo <<<EOT
   <title>$sepsTitle</title>
   <meta name="generator" content="$sepsSoftwareAboutLine" />
   <link href="css/bootstrap.min.css" rel="stylesheet" />
+  <link href="css/twitter-bootstrap-calendar.css" rel="stylesheet" />
   <link href="css/style.css" rel="stylesheet" />
   <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>

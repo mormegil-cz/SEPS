@@ -1,0 +1,191 @@
+.calendar_grid {
+  border: 1px solid gray;
+  margin-bottom: 30px;
+  /*!
+   * Bootstrap v2.2.1
+   *
+   * Copyright 2012 Twitter, Inc
+   * Licensed under the Apache License v2.0
+   * http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Designed and built with all the love in the world @twitter by @mdo and @fat.
+   */ }
+  .calendar_grid .month_header {
+    background-color: gray; }
+    .calendar_grid .month_header .span1 {
+      padding-top: 5px;
+      font-weight: bold;
+      text-align: center; }
+  .calendar_grid .notmonth {
+    background-color: #e0e0e0; }
+  .calendar_grid .notmonth, .calendar_grid .notmonth a {
+    color: white; }
+  .calendar_grid .month.today {
+    background-color: #D7F2FF; }
+  .calendar_grid .month {
+    background-color: #ededed;
+    border: 1px solid whitesmoke; }
+  .calendar_grid .week .span1 {
+    padding: 2px; }
+  .calendar_grid .clearfix {
+    *zoom: 1; }
+  .calendar_grid .clearfix:before,
+  .calendar_grid .clearfix:after {
+    display: table;
+    content: "";
+    line-height: 0; }
+  .calendar_grid .clearfix:after {
+    clear: both; }
+  .calendar_grid .hide-text {
+    font: 0/0 a;
+    color: transparent;
+    text-shadow: none;
+    background-color: transparent;
+    border: 0; }
+  .calendar_grid .input-block-level {
+    display: block;
+    width: 100%;
+    min-height: 30px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box; }
+  .calendar_grid .row {
+    margin-left: -1px;
+    *zoom: 1; }
+  .calendar_grid .row:before,
+  .calendar_grid .row:after {
+    display: table;
+    content: "";
+    line-height: 0; }
+  .calendar_grid .row:after {
+    clear: both; }
+  .calendar_grid [class*="span"] {
+    float: left;
+    min-height: 1px;
+    margin-left: 1px; }
+  .calendar_grid .container,
+  .calendar_grid .navbar-static-top .container,
+  .calendar_grid .navbar-fixed-top .container,
+  .calendar_grid .navbar-fixed-bottom .container {
+    width: 958px; }
+  .calendar_grid .span7 {
+    width: 958px; }
+  .calendar_grid .span6 {
+    width: 821px; }
+  .calendar_grid .span5 {
+    width: 684px; }
+  .calendar_grid .span4 {
+    width: 547px; }
+  .calendar_grid .span3 {
+    width: 410px; }
+  .calendar_grid .span2 {
+    width: 273px; }
+  .calendar_grid .span1 {
+    width: 136px; }
+  .calendar_grid .offset7 {
+    margin-left: 960px; }
+  .calendar_grid .offset6 {
+    margin-left: 823px; }
+  .calendar_grid .offset5 {
+    margin-left: 686px; }
+  .calendar_grid .offset4 {
+    margin-left: 549px; }
+  .calendar_grid .offset3 {
+    margin-left: 412px; }
+  .calendar_grid .offset2 {
+    margin-left: 275px; }
+  .calendar_grid .offset1 {
+    margin-left: 138px; }
+  .calendar_grid .row-fluid {
+    width: 100%;
+    *zoom: 1; }
+  .calendar_grid .row-fluid:before,
+  .calendar_grid .row-fluid:after {
+    display: table;
+    content: "";
+    line-height: 0; }
+  .calendar_grid .row-fluid:after {
+    clear: both; }
+  .calendar_grid .row-fluid [class*="span"] {
+    display: block;
+    width: 100%;
+    min-height: 30px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    float: left;
+    margin-left: 0.10438413361169101%;
+    *margin-left: 0.052192066805845504%; }
+  .calendar_grid .row-fluid [class*="span"]:first-child {
+    margin-left: 0; }
+  .calendar_grid .row-fluid .controls-row [class*="span"] + [class*="span"] {
+    margin-left: 0.10438413361169101%; }
+  .calendar_grid .row-fluid .span7 {
+    width: 100%;
+    *width: 99.94780793319416%; }
+  .calendar_grid .row-fluid .span6 {
+    width: 85.69937369519833%;
+    *width: 85.64718162839249%; }
+  .calendar_grid .row-fluid .span5 {
+    width: 71.39874739039666%;
+    *width: 71.34655532359082%; }
+  .calendar_grid .row-fluid .span4 {
+    width: 57.09812108559499%;
+    *width: 57.045929018789145%; }
+  .calendar_grid .row-fluid .span3 {
+    width: 42.79749478079332%;
+    *width: 42.74530271398748%; }
+  .calendar_grid .row-fluid .span2 {
+    width: 28.49686847599165%;
+    *width: 28.444676409185806%; }
+  .calendar_grid .row-fluid .span1 {
+    width: 14.19624217118998%;
+    *width: 14.144050104384133%; }
+  .calendar_grid .row-fluid .offset7 {
+    margin-left: 100.20876826722338%;
+    *margin-left: 100.10438413361169%; }
+  .calendar_grid .row-fluid .offset7:first-child {
+    margin-left: 100.10438413361169%;
+    *margin-left: 100%; }
+  .calendar_grid .row-fluid .offset6 {
+    margin-left: 85.90814196242171%;
+    *margin-left: 85.80375782881002%; }
+  .calendar_grid .row-fluid .offset6:first-child {
+    margin-left: 85.80375782881002%;
+    *margin-left: 85.69937369519833%; }
+  .calendar_grid .row-fluid .offset5 {
+    margin-left: 71.60751565762004%;
+    *margin-left: 71.50313152400835%; }
+  .calendar_grid .row-fluid .offset5:first-child {
+    margin-left: 71.50313152400835%;
+    *margin-left: 71.39874739039666%; }
+  .calendar_grid .row-fluid .offset4 {
+    margin-left: 57.306889352818374%;
+    *margin-left: 57.202505219206685%; }
+  .calendar_grid .row-fluid .offset4:first-child {
+    margin-left: 57.20250521920668%;
+    *margin-left: 57.09812108559499%; }
+  .calendar_grid .row-fluid .offset3 {
+    margin-left: 43.006263048016706%;
+    *margin-left: 42.90187891440502%; }
+  .calendar_grid .row-fluid .offset3:first-child {
+    margin-left: 42.90187891440501%;
+    *margin-left: 42.79749478079332%; }
+  .calendar_grid .row-fluid .offset2 {
+    margin-left: 28.70563674321503%;
+    *margin-left: 28.601252609603343%; }
+  .calendar_grid .row-fluid .offset2:first-child {
+    margin-left: 28.601252609603343%;
+    *margin-left: 28.496868475991654%; }
+  .calendar_grid .row-fluid .offset1 {
+    margin-left: 14.405010438413361%;
+    *margin-left: 14.30062630480167%; }
+  .calendar_grid .row-fluid .offset1:first-child {
+    margin-left: 14.30062630480167%;
+    *margin-left: 14.196242171189978%; }
+  .calendar_grid [class*="span"].hide,
+  .calendar_grid .row-fluid [class*="span"].hide {
+    display: none; }
+  .calendar_grid [class*="span"].pull-right,
+  .calendar_grid .row-fluid [class*="span"].pull-right {
+    float: right; }

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 
 function mainPageContents()
 {
-	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser, $sepsLoggedUserGlobalRights;
+	global $action, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsPageMessage, $sepsLoggedUser, $sepsLoggedUserGlobalRights, $sepsTitle;
 
 	$invitation = getVariableOrNull('inv');
 	if ($invitation)
@@ -50,8 +50,6 @@ function mainPageContents()
 	$sepsLoggedUserMaxAccess = 0;
 	loadLoggedUserInformation();
 
-	$menu = null;
-
 	if ($sepsPageMessage)
 	{
 		echo "<div class='globalmsg'>$sepsPageMessage</div>";
@@ -82,6 +80,51 @@ function mainPageContents()
 		require_once('./include/UserManagement.php');
 		require_once('./include/Administration.php');
 
+        // --- menu
+        echo '<div class="navbar navbar-inverse navbar-fixed-top" role="navigation"><div class="container"><div class="navbar-header"><button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse"><span class="sr-only">Navigace</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span></button> <a class="navbar-brand" href="?">' . htmlspecialchars($sepsTitle) . '</a></div><div class="collapse navbar-collapse"><ul class="nav navbar-nav">';
+        echo '<li><a href="?">Kalendář</a></li>';
+        echo '<li><a href="?action=eventlist">Seznam</a></li>';
+
+		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) echo '<li><a href="?action=invite">Přizvat nováčka</a></li>';
+		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) echo '<li><a href="?action=messaging">Poslat zprávu</a></li>';
+
+		if (($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateAccount) ||
+            ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) ||
+            ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes))
+        {
+            echo '<ul class="nav navbar-nav"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">Správa projektu<span class="caret"></span></a><ul class="dropdown-menu" role="menu">';
+            if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateAccount) echo '<li><a href="?action=createaccount">Založit uživatele</a></li>';
+            if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) echo '<li><a href="?action=manageusers">Spravovat uživatele</a></li>';
+            if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) echo '<li><a href="?action=manageeventtypes">Spravovat typy událostí</a></li>';
+            echo '</ul></li>';
+        }
+
+        if (($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects) ||
+            ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects) ||
+            ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions) ||
+            ($sepsLoggedUserGlobalRights & (sepsGlobalAccessFlagsCanSendGlobalWebMessages | sepsGlobalAccessFlagsCanSendGlobalMailMessages)) ||
+            ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanViewLog))
+        {
+            echo '<ul class="nav navbar-nav"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">Administrace<span class="caret"></span></a><ul class="dropdown-menu" role="menu">';
+            if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects) echo '<li><a href="?action=newproject">Založit nový projekt</a></li>';
+            if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects) echo '<li><a href="?action=deleteproject">Zrušit projekt</a></li>';
+            if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions) echo '<li><a href="?action=manageglobalpermissions">Spravovat globální práva</a></li>';
+            if ($sepsLoggedUserGlobalRights & (sepsGlobalAccessFlagsCanSendGlobalWebMessages | sepsGlobalAccessFlagsCanSendGlobalMailMessages)) echo '<li><a href="?action=globalmessaging">Poslat globální zprávu</a></li>';
+            if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanViewLog) echo '<li><a href="?action=viewlog">Log</a></li>';
+            echo '</ul></li>';
+        }
+
+        echo '<ul class="nav navbar-nav navbar-right"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">' . htmlspecialchars($sepsLoggedUserCaption) . '<span class="caret"></span></a><ul class="dropdown-menu" role="menu">';
+        echo '<li><a href="?action=export">Export</a></li>';
+        echo '<li><a href="?action=settings">Nastavení</a></li>';
+        echo '<li><a href="?action=logout">Odhlásit se</a></li>';
+        echo '</ul></li>';
+
+        echo '</ul></div></div></div>';
+        // ---
+
+        echo '<div class="container">';
+        
 		if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
 			if ($action == 'createevent')
@@ -219,51 +262,27 @@ function mainPageContents()
 			// globalMessaging();
 		}
 
-		echo '<br class="cleaner" />';
-
-		$menu = array();
-		$menu[] = array('?', 'Kalendář');
-		$menu[] = array('?action=eventlist', 'Seznam');
-		if ($sepsLoggedUserEmail && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanInvite)) $menu[] = array('?action=invite', 'Pozvat dalšího');
-		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateAccount) $menu[] = array('?action=createaccount', 'Založit uživatele');
-		if ($sepsLoggedUserMaxAccess & (sepsAccessFlagsCanSendWebMessages | sepsAccessFlagsCanSendMailMessages)) $menu[] = array('?action=messaging', 'Poslat zprávu');
-		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) $menu[] = array('?action=manageusers', 'Spravovat uživatele');
-		if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) $menu[] = array('?action=manageeventtypes', 'Spravovat typy událostí');
-		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects) $menu[] = array('?action=newproject', 'Založit nový projekt');
-		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects) $menu[] = array('?action=deleteproject', 'Zrušit projekt');
-		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions) $menu[] = array('?action=manageglobalpermissions', 'Spravovat globální práva');
-		if ($sepsLoggedUserGlobalRights & (sepsGlobalAccessFlagsCanSendGlobalWebMessages | sepsGlobalAccessFlagsCanSendGlobalMailMessages)) $menu[] = array('?action=globalmessaging', 'Poslat globální zprávu');
-		if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanViewLog) $menu[] = array('?action=viewlog', 'Log');
-		$menu[] = array('?action=export', 'Export');
-		$menu[] = array('?action=settings', 'Nastavení');
-		$menu[] = array('?action=logout', 'Odhlásit se');
-	}
-
-	echo '	</div>';
-
-	if ($menu)
-	{
-		echo '	<div id="menu">';
-		echo '<p class="loggedin">Uživatel: ' . htmlspecialchars($sepsLoggedUserCaption) . '</p>';
-		echo '<ul>';
-		foreach($menu as $item)
-		{
-			echo "<li><a href='$item[0]'>$item[1]</a></li>";
-		}
-		echo '	</ul></div>';
-	}
+        echo '</div>';
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------
 
 echo <<<EOT
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="cs">
  <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>$sepsTitle</title>
   <meta name="generator" content="$sepsSoftwareAboutLine" />
-  <link rel="stylesheet" href="css/main.css" type="text/css" />
+  <link href="css/bootstrap.min.css" rel="stylesheet" />
+  <link href="css/style.css" rel="stylesheet" />
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
 EOT;
 
   if ($sepsFavicon) echo "<link rel='shortcut icon' href='$sepsFavicon' type='image/vnd.microsoft.icon' />";
@@ -271,22 +290,19 @@ EOT;
 echo <<<EOT
  </head>
  <body>
-
-  <div id='header'>
-	<div id='sitelogo'><a href='?'><img src='$sepsSiteLogo' width='100' height='100' alt='' /></a></div>
-	<h1 id='sitecaption'>$sepsTitle</h1>
-	<br class="cleaner" />
-  </div>
-  <div id='page'>
-	<div id='contents'>
 EOT;
 
 	mainPageContents();
 
-  echo '</div>';
-  echo '<br class="cleaner" />';
-  echo "<div id='footer'>Powered by <a href='$sepsSoftwareHomePage'>$sepsSoftwareAboutLine</a>. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></div>';
+  echo "<div class='footer'><div class='container'><p class='text-muted'>Powered by <a href='$sepsSoftwareHomePage'>$sepsSoftwareAboutLine</a>. Správce serveru: <a href='mailto:" . str_replace('@', '&#x40;', $sepsAdminMail) . "'>" . str_replace('@', '&#x40;', $sepsAdminMail) . '</a></p></div></div>';
 
 ?>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script>
+$(function() {
+    $('.modal').modal('show');
+});
+  </script>
  </body>
 </html>

@@ -1,6 +1,6 @@
 <?php
 
-$sepsSoftwareVersion = '0.2dev';
+$sepsSoftwareVersion = '0.5dev';
 $sepsSoftwareVersionLine = 'SEPS/' . $sepsSoftwareVersion;
 $sepsSoftwareVersionFpi = '-//mormegil.cz//NONSGML SEPS-' . $sepsSoftwareVersion . '//EN';
 $sepsSoftwareAboutLine = 'SEPS version ' . $sepsSoftwareVersion;

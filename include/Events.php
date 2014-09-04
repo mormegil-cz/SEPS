@@ -659,28 +659,32 @@ function newEventForm($date)
 		$availableTypes[$row['id']] = htmlspecialchars($row['title']);
 	}
 
-	echo '<div class="bottomform newevent">';
+    echo '<div class="modal" role="dialog" aria-labelledby="modal-title"><div class="modal-dialog"><div class="modal-content">';
+    echo '<div class="modal-header"><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Zavřít</span></button><h4 class="modal-title" id="modal-title">Nová událost na ' . strftime('%d.&nbsp;%m.&nbsp;%Y', $date) . '</h4></div>';
 	if ($availableTypes)
 	{
-		echo "<h2>Nová událost na " . strftime('%d.&nbsp;%m.&nbsp;%Y', $date) . "</h2>";
-		echo "<form action='?' method='post'><input type='hidden' name='action' value='createevent' /><input type='hidden' name='date' value='$date' />";
+		echo "<form role='form' action='?' method='post'><input type='hidden' name='action' value='createevent' /><input type='hidden' name='date' value='$date' />";
 		generateCsrfToken();
-		echo "Nadpis: <input type='text' name='title' /><br />";
-
-		echo 'Typ události: <select name="eventtype">';
+        echo '<div class="modal-body">';
+        echo '<div class="form-group"><label for="title">Nadpis:</label> <input type="text" class="form-control" id="title" name="title" placeholder="Zadejte nadpis události" required="required" /></div>';
+		echo '<div class="form-group"><label for="eventtype">Typ události:</label> <select name="eventtype" class="form-control">';
 		foreach($availableTypes as $typeid => $typename)
 		{
 			echo "<option value='$typeid'>$typename</option>";
 		}
-		echo '</select><br />';
-		echo '<input type="submit" value="Vytvořit událost" />';
-		echo "</form>";
+		echo '</select></div>';
+        echo '</div>';
+        echo '<div class="modal-footer">';
+        echo '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><button type="submit" class="btn btn-primary">Vytvořit událost</button></div></div>';
+        echo '</div>';
+		echo '</form>';
 	}
 	else
 	{
-		echo '<div class="errmsg">Nelze založit novou událost, jsou definovány nějaké typy?</div>';
+        echo '<div class="modal-body"><div class="alert alert-danger" role="alert">Nelze založit novou událost, jsou definovány nějaké typy?</div></div>';
+        echo '<div class="modal-footer"><a href="?" class="btn btn-default" data-dismiss="modal">Zavřít</button></div>';
 	}
-	echo '</div>';
+	echo '</div></div></div>';
 }
 
 function createNewEvent()

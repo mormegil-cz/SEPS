@@ -1,6 +1,7 @@
 <?php
 
 require_once('./include/Logging.php');
+require_once('./include/Dialogs.php');
 
 function manageUsersForm()
 {
@@ -23,12 +24,13 @@ function manageUsersForm()
 		else $projectId = null;
 	}
 
+    $doChangeProjectId = false;
 	if ($projectId)
 	{
-		modifyUser($projectId, $projectName);
+        $doChangeProjectId = $projectId;
+        $doChangeProjectName = $projectName;
 	}
 
-	echo '<div class="bottomform usermanagement">';
 	if (!$projectId)
 	{
 		$projectsFoundCount = 0;
@@ -44,8 +46,9 @@ function manageUsersForm()
 					$projectTitleFound = $row['title'];
 					break;
 				case 2:
-					echo '<h2>Správa uživatelů</h2>';
-					echo '<label for="project">Projekt:</label> <select name="project" id="project" onchange="javascript:this.form.submit()" />';
+                    beginDialog('Správa uživatelů');
+                    beginDialogBody();
+					echo '<div class="form-group"><label for="project">Projekt:</label> <select name="project" id="project" class="form-control" onchange="javascript:this.form.submit()" />';
 					echo "<option value='$projectIdFound'>" . htmlspecialchars($projectTitleFound) . "</option>";
 					// fall-through!
 				default:
@@ -55,7 +58,7 @@ function manageUsersForm()
 		switch($projectsFoundCount)
 		{
 			case 0:
-				echo '<div class="errmsg">Nemáte oprávnění pro správu uživatelů!</div>';
+                alert('Nemáte oprávnění pro správu uživatelů!', 'danger');
 				return;
 			case 1:
 				$projectId = $projectIdFound;
@@ -63,14 +66,19 @@ function manageUsersForm()
 				echo "<input type='hidden' name='project' value='$projectId' />";
 				break;
 			default:
-				echo '</select>';
+				echo '</select></div>';
 		}
 	}
 
 	if ($projectId)
 	{
-		echo '<h2>Správa uživatelů projektu ' . htmlspecialchars($projectName) . '</h2>';
-		echo '<label for="user">Uživatel:</label> <select name="user" id="user">';
+        beginDialog('Správa uživatelů projektu ' . htmlspecialchars($projectName));
+        beginDialogBody();
+        if ($doChangeProjectId)
+        {
+            modifyUser($doChangeProjectId, $doChangeProjectName);
+        }
+		echo '<div class="form-group"><label for="user">Uživatel:</label> <select name="user" id="user" class="form-control">';
 		$query = mysql_query("SELECT u.id, u.caption, u.username FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
 		while ($row = mysql_fetch_assoc($query))
 		{
@@ -78,19 +86,18 @@ function manageUsersForm()
 			if (!$title) $title = $row['username'];
 			echo "<option value='$row[id]'>" . htmlspecialchars($title) . "</option>";
 		}
-		echo '</select><br />';
-		echo '<label for="priority">Priorita:</label> <select name="priority" id="priority">';
+		echo '</select></div>';
+		echo '<div class="form-group"><label for="priority">Priorita:</label> <select name="priority" id="priority" class="form-control">';
 		echo '<option value="N">[Ponechat stávající]</option>';
 		echo '<option value="20">' . userPriorityToString(20) . '</option>';
 		echo '<option value="10">' . userPriorityToString(10) . '</option>';
 		echo '<option value="0">' . userPriorityToString(0) . '</option>';
 		echo '<option value="-10">' . userPriorityToString(-10) . '</option>';
 		echo '<option value="-20">' . userPriorityToString(-20) . '</option>';
-		echo '</select><br />';
+		echo '</select></div>';
 
-		echo '<div class="formblock">';
-		echo '<table><thead><caption>Oprávnění</caption></thead><tbody>';
-		echo '<tr><th>#</th><th>Oprávnění</th><th>Neměnit</th><th>Přidělit</th><th>Odebrat</th></tr>';
+        beginPanel('Oprávnění');
+        echo '<table class="table"><tr><th>#</th><th>Oprávnění</th><th>Neměnit</th><th>Přidělit</th><th>Odebrat</th></tr>';
 		for ($accessBit = 1, $idx = 0; $accessBit <= sepsAccessMaxValidBit; $accessBit <<= 1, $idx++)
 		{
 			$counter = $idx + 1;
@@ -98,19 +105,21 @@ function manageUsersForm()
 			// TODO: check access?
 			echo "<td><input type='radio' name='access_$accessBit' value='add'></td><td><input type='radio' name='access_$accessBit' value='remove'></td></tr>";
 		}
-		echo '</tbody></table>';
-		echo '</div>';
+		echo '</table>';
+        endPanel();
 
-		echo '<input type="checkbox" name="kickuser" id="kickuser" onclick="if (this.checked) return confirm(\'Určitě vyhodit uživatele?\')"><label for="kickuser">Vyhodit uživatele z projektu</label></input><br />';
+		echo '<div class="checkbox"><label><input type="checkbox" name="kickuser" id="kickuser" onclick="if (this.checked) return confirm(\'Určitě vyhodit uživatele?\')" /> Vyhodit uživatele z projektu</label></div>';
 	}
 
-	echo '<input type="submit" value="Provést změny" />';
+	echo '<p class="text-right"><input type="submit" class="btn btn-primary btn-lg" value="Provést změny" /> <a href="?" class="btn btn-default btn-lg">Zavřít</a></p>';
+    endDialogBody();
 
 	if ($projectId)
 	{
-		echo '<div class="userslist"><table class="usersoverview">';
-		echo '<thead><caption>Seznam uživatelů</caption></thead>';
-		echo '<tbody>';
+        beginDialogFooter();
+        echo '<div style="text-align: left">'; // záplata na .dialogfooter { text-align: right } v Bootstrapu
+        beginPanel('Seznam uživatelů');
+		echo '<table class="table">';
 		echo '<tr><th>Uživatel</th><th>Priorita</th><th>Oprávnění</th></tr>';
 		$query = mysql_query("SELECT u.caption, u.username, up.priority, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
 		while ($row = mysql_fetch_assoc($query))
@@ -127,11 +136,13 @@ function manageUsersForm()
 			}
 			echo '</tt></td>';
 		}
-		echo '</tbody>';
-		echo '</table></div>';
+		echo '</table>';
+        endPanel();
+        echo '</div>'; // záplatový div
+        endDialogFooter();
 	}
 
-	echo '</div>';
+	endDialog();
 	echo '</form>';
 }
 
@@ -174,12 +185,12 @@ function modifyUser($projectId, $projectName)
 		if (mysql_query("DELETE FROM usersprojects WHERE user=$user AND project=$projectId LIMIT 1") && (mysql_affected_rows() > 0))
 		{
 			logMessage("Uživatel $sepsLoggedUsername vyřadil uživatele $username z projektu $projectName");
-			echo '<div class="infomsg">Uživatel byl vyřazen z projektu</div>';
+            alert('Uživatel byl vyřazen z projektu', 'success');
 		}
 		else
 		{
-			echo '<div class="errmsg">Nepodařilo se vyřadit uživatele z projektu</div>';
-			echo mysql_error();
+            alert('Nepodařilo se vyřadit uživatele z projektu', 'danger');
+			//echo mysql_error();
 		}
 		return;
 	}
@@ -215,26 +226,31 @@ function modifyUser($projectId, $projectName)
 	if ($query)
 	{
 		$query = 'UPDATE usersprojects SET ' . substr($query, 2) . " WHERE user=$user AND project=$projectId LIMIT 1";
-		if (mysql_query($query) && (mysql_affected_rows() > 0))
+        $success = mysql_query($query);
+        if (!$success)
+        {
+			alert('Nepodařilo se aktualizovat uživatele', 'danger');
+        }
+		else if (mysql_affected_rows() > 0)
 		{
 			logMessage("Uživatel $sepsLoggedUsername upravil práva uživatele $username v projektu $projectName");
-			echo '<div class="infomsg">Uživatel byl upraven</div>';
+			alert('Uživatel byl upraven', 'success');
 		}
 		else
 		{
-			echo '<div class="errmsg">Nepodařilo se aktualizovat uživatele</div>';
+			alert('Nebyly požadovány žádné změny', 'warning');
 		}
 	}
+    else
+    {
+		alert('Nebyly požadovány žádné změny', 'warning');
+    }
 }
 
 function accountCreationForm($username = '', $password = '', $password2 = '', $errormessage = null)
 {
 	global $sepsLoggedUser;
 
-	if ($errormessage)
-	{
-		echo "<div class='errmsg'>$errormessage</div>";
-	}
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="createuser" />';
 	generateCsrfToken();
 	$projectId = getVariableOrNull('project');
@@ -252,7 +268,6 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 		else $projectId = null;
 	}
 
-	echo '<div class="bottomform usercreation">';
 	$projectsFoundCount = 0;
 	$projectIdFound = null;
 	$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
@@ -266,8 +281,13 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 				$projectTitleFound = $row['title'];
 				break;
 			case 2:
-				echo '<h2>Založení nového uživatele</h2>';
-				echo '<label for="project">Projekt:</label> <select name="project" id="project" />';
+                beginDialog('Založení nového uživatele');
+                beginDialogBody();
+                if ($errormessage)
+                {
+                    alert($errormessage, 'danger');
+                }
+				echo '<div class="form-group"><label for="project">Projekt:</label> <select name="project" id="project" class="form-control">';
 				echo "<option value='$projectIdFound'>" . htmlspecialchars($projectTitleFound) . "</option>";
 				// fall-through!
 			default:
@@ -277,24 +297,32 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 	switch($projectsFoundCount)
 	{
 		case 0:
-			echo '<div class="errmsg">Nemáte oprávnění k založení nového uživatele!</div>';
+            alert('Nemáte oprávnění k založení nového uživatele!', 'danger');
 			return;
 		case 1:
 			$projectId = $projectIdFound;
 			$projectName = $projectTitleFound;
-			echo '<h2>Založení nového uživatele projektu ' . htmlspecialchars($projectTitleFound) . '</h2>';
+            beginDialog('Založení nového uživatele projektu ' . htmlspecialchars($projectTitleFound));
+            beginDialogBody();
+            if ($errormessage)
+            {
+                alert($errormessage, 'danger');
+            }
 			echo "<input type='hidden' name='project' value='$projectId' />";
 			break;
 		default:
-			echo '</select><br />';
+			echo '</select></div>';
 	}
 
-	echo '<label for="username">Uživatelské jméno:</label> <input name="username" id="username" maxlength="100" value="' . htmlspecialchars($username) . '"><br />';
-	echo '<label for="password">Počáteční heslo:</label> <input type="password" name="password" id="password" value="' . htmlspecialchars($password) . '"><br />';
-	echo '<label for="password2">Zopakovat heslo:</label> <input type="password" name="password2" id="password2" value="' . htmlspecialchars($password2) . '"><br />';
-	echo '<input type="submit" value="Provést změny" />';
+	echo '<div class="form-group"><label for="username">Uživatelské jméno:</label> <input name="username" id="username" class="form-control" maxlength="100" value="' . htmlspecialchars($username) . '" /></div>';
+	echo '<div class="form-group"><label for="password">Počáteční heslo:</label> <input type="password" name="password" id="password" class="form-control" value="' . htmlspecialchars($password) . '" /></div>';
+	echo '<div class="form-group"><label for="password2">Zopakovat heslo:</label> <input type="password" name="password2" id="password2" class="form-control" value="' . htmlspecialchars($password2) . '" /></div>';
 
-	echo '</div>';
+    endDialogBody();
+    beginDialogFooter();
+	echo '<input type="submit" value="Provést změny" class="btn btn-primary btn-lg" />';
+    endDialogFooter();
+    endDialog();
 	echo '</form>';
 }
 
@@ -375,5 +403,5 @@ function createNewUser()
 	logMessage("Uživatel $sepsLoggedUsername založil nového uživatele $username a přidal jej do projektu $projectName");
 
 	mysql_query('COMMIT');
-	echo '<div class="infomsg">Uživatel úspěšně založen</div>';
+    alert('Uživatel úspěšně založen', 'success');
 }

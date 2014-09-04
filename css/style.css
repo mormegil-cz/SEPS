@@ -21,3 +21,15 @@ body > .container {
 .container .text-muted {
   margin: 20px 0;
 }
+
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}

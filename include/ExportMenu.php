@@ -21,33 +21,47 @@ function showExportMenu()
 	$row = mysql_fetch_row($query);
 	$token = $row[0];
 
-	echo '<div class="exportmenu">';
+    beginDialog('Export kalendáře');
+    beginDialogBody();
 	if ($token)
 	{
 		// zobrazit možnosti
-		echo '<h3>Možnosti exportu</h3>';
+        beginPanel('Možnosti exportu');
+        beginPanelBody();
 		echo '<ul>';
 		showExportLink('iCalendar (všechny události)', $token, 'ics');
 		showExportLink('iCalendar (jen moje)', $token, 'ics', 'mine=1');
 		echo '</ul>';
+        endPanelBody();
+        endPanel();
 
 		// nabídnout přegenerování API klíče
-		echo '<h4>Přegenerování klíče</h4>';
+        beginPanel('Přegenerování klíče');
+        beginPanelBody();
 		echo '<p>Pokud chcete, můžete zneplatit původní exportovací odkazy a nechat si vygenerovat nové:</p>';
-		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat nové" />';
+		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat nové" class="btn btn-default" />';
 		generateCsrfToken();
 		echo '</form>';
+        endPanelBody();
+        endPanel();
 	}
 	else
 	{
 		// nabídnout vygenerování API klíče
-		echo '<h3>Vygenerování exportního klíče</h3>';
+        beginPanel('Vygenerování exportního klíče');
+        beginPanelBody();
 		echo '<p>Zde máte možnost si kalendář vyexportovat, abyste ho mohli použít v jiných aplikacích (např. Google Calendar). Pro používání exportu si však nejprve musíte nechat vygenerovat unikátní klíč. Pokud tedy budete chtít používat export, stiskněte následující tlačítko.</p>';
-		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat klíč" />';
+		echo '<form action="?" method="post"><input type="hidden" name="action" value="genapitoken" /><input type="submit" value="Vygenerovat klíč" class="btn btn-primary" />';
 		generateCsrfToken();
 		echo '</form>';
+        endPanelBody();
+        endPanel();
 	}
-	echo '</div>';
+    endDialogBody();
+    beginDialogFooter();
+    echo '<a href="?" class="btn btn-default">Zavřít</a>';
+    endDialogFooter();
+	endDialog();
 }
 
 function generateApiToken()

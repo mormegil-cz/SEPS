@@ -381,8 +381,11 @@ function printEventsCalendar($showSelectedDate)
 {
 	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess, $sepsCountry;
 
-	echo '<div class="calendar"><table class="calendar"><caption>Kalendář plánovaných akcí</caption>';
-	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
+	echo '<div class="calendar_grid">';
+    echo '<div class="month_header row-fluid">';
+    echo '<div class="span1 visible-desktop">Pondělí</div><div class="span1 visible-desktop">Úterý</div><div class="span1 visible-desktop">Středa</div><div class="span1 visible-desktop">Čtvrtek</div><div class="span1 visible-desktop">Pátek</div><div class="span1 visible-desktop">Sobota</div><div class="span1 visible-desktop">Neděle</div>';
+    //echo '<div class="span1 hidden-desktop" style="width: 14.1%">Po</div><div class="span1 hidden-desktop" style="width: 14.1%">Út</div><div class="span1 hidden-desktop" style="width: 14.1%">St</div><div class="span1 hidden-desktop" style="width: 14.1%">Čt</div><div class="span1 hidden-desktop" style="width: 14.1%">Pá</div><div class="span1 hidden-desktop" style="width: 14.1%">So</div><div class="span1 hidden-desktop" style="width: 14.1%">Ne</div>';
+    echo '</div>';
 
 	$today = mktime();
 	$todayStr = strftime('%d.&nbsp;%m.', $today);
@@ -398,7 +401,7 @@ function printEventsCalendar($showSelectedDate)
 	$date = $startMonday;
 	for ($week = 0; $week < $sepsCalendarWeeks; $week++)
 	{
-		echo '<tr>';
+		echo '<div class="row-fluid week">';
 		for ($weekDay = 0; $weekDay < 7; $weekDay++, $date += 86400)
 		{
 			$events = findEvents($date);
@@ -408,7 +411,7 @@ function printEventsCalendar($showSelectedDate)
 			$dayClass .= $date < $today ? ' past' : ' future';
 			if ($dateStr == $todayStr) $dayClass .= ' today';
 			if ($showSelectedDate && $dateStr == $selectedStr) $dayClass .= ' selected';
-			echo "<td class='$dayClass'>";
+			echo "<div class='span1 month $dayClass'>";
 			if ($date >= $today && ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateEvents))
 			{
 				echo "<div class='addevent'><a href='?action=newevent&amp;date=$date' title='Přidat novou událost'>+</a></div>";
@@ -424,12 +427,12 @@ function printEventsCalendar($showSelectedDate)
 				echo "<div class='$cssClass'><a class='event-detail' href='?eid=$eid&amp;date=$date'>$eventTitle</a> ($subscriberCount)</div>";
 			}
 
-			echo '</td>';
+			echo '</div>';
 		}
-		echo '</tr>';
+		echo '</div>';
 	}
 
-	echo '</table>';
+	echo '</div>';
 	$prevdate = strftime(floor($startDate/86400 - 7) * 86400);
 	$nextdate = strftime(floor($startDate/86400 + 7) * 86400);
 	echo "<div class='linkprev'><a href='?date=$prevdate'>&uarr; Předchozí</a></div><div class='linknext'><a href='?date=$nextdate'>Následující &darr;</a></div>";

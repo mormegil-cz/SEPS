@@ -2,33 +2,37 @@
 
 function loginScreen()
 {
-	global $sepsPageMessage;
+	global $sepsPageMessage, $sepsTitle;
 
-	echo '<div class="bigform login"><form action="?' . htmlspecialchars($_SERVER['QUERY_STRING']) . '" method="post"><input type="hidden" name="action" value="login" />';
+	echo '<div class="container" style="margin-top:30px"><div class="col-md-4 col-md-offset-4"><div class="panel panel-default"><div class="panel-heading"><h3 class="panel-title"><strong>Přihlášení do systému ' . htmlspecialchars($sepsTitle) . '</strong></h3></div><div class="panel-body">';
+	echo '<form action="?' . htmlspecialchars($_SERVER['QUERY_STRING']) . '" method="post"><input type="hidden" name="action" value="login" />';
 	generateCsrfToken();
 	if (getVariableOrNull('noip')) echo '<input type="hidden" name="noipcheck" value="1" />';
-	echo '<label for="username">Uživatel:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
-	echo '<label for="password">Heslo:</label> <input type="password" id="password" name="password" /><br />';
-	echo '<input type="submit" value="Přihlásit se" />';
-	if ($sepsPageMessage)
+	if ($sepsPageMessage) echo "<div class='alert alert-danger'>$sepsPageMessage</div>";
+	echo '<div class="form-group"><label for="username">Uživatel:</label><input type="text" class="form-control" id="username" name="username" placeholder="Zadejte uživatelské jméno" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /></div>';
+	echo '<div class="form-group"><label for="password">Heslo';
+	//if ($sepsPageMessage)
 	{
-		echo '<br /><a href="?action=resetpass">Zapomněl jsem heslo</a>';
+		echo ' (<a href="?action=resetpass" tabindex="5">zapomenuté heslo</a>)';
 	}
-	echo '</form></div>';
+	echo ':</label><input type="password" class="form-control" id="password" name="password" placeholder="Heslo" /></div>';
+	echo '<button type="submit" class="btn btn-primary">Přihlásit se</button>';
+	echo '</form>';
+	echo '</div></div></div></div>';
 }
 
 function passwordResetForm($errmsg = null)
 {
-	echo '<div class="bigform passwordreset">';
-	echo '<h2>Zapomenuté heslo</h2>';
+	echo '<div class="container" style="margin-top:30px"><div class="col-md-4 col-md-offset-4"><div class="panel panel-default"><div class="panel-heading"><h3 class="panel-title"><strong>Zapomenuté heslo</strong></h3></div><div class="panel-body">';
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="sendpassreset" />';
 	generateCsrfToken();
-	if ($errmsg) echo "<div class='errmsg'>$errmsg</div>";
-	echo '<div><small class="formhelp">Pokud jste zapomněli heslo, vyplňte své uživatelské jméno, nebo registrovaný e-mail a stiskněte tlačítko. Na váš e-mail bude doručena zpráva s dalšími pokyny.</small></div>';
-	echo '<label for="username">Uživatelské jméno:</label> <input type="text" id="username" name="username" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /><br />';
-	echo '<label for="email">E-mail:</label> <input type="text" id="email" name="email" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('email')) . '" /><br />';
-	echo '<input type="submit" value="Vygenerovat nové heslo" />';
-	echo '</form></div>';
+	echo '<span class="help-block">Pokud jste zapomněli heslo, vyplňte své uživatelské jméno, nebo registrovaný e-mail a stiskněte tlačítko. Na váš e-mail bude doručena zpráva s dalšími pokyny.</span>';
+	if ($errmsg) echo "<div class='alert alert-danger'>$errmsg</div>";
+	echo '<div class="form-group"><label for="username">Uživatelské jméno:</label><input type="text" class="form-control" id="username" name="username" placeholder="Zadejte uživatelské jméno" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('username')) . '" /></div>';
+	echo '<div class="form-group"><label for="email">E-mail:</label><input type="text" class="form-control" id="email" name="email" placeholder="nebo registrovaný e-mail" maxlength="100" value="' . htmlspecialchars(getVariableOrNull('email')) . '" /></div>';
+	echo '<button type="submit" class="btn btn-primary">Vygenerovat nové heslo</button> <a href="?" class="btn btn-default">Storno</a>';
+	echo '</form>';
+	echo '</div></div></div></div>';
 }
 
 function sendPasswordReset()
@@ -71,9 +75,9 @@ function sendPasswordReset()
 		return;
 	}
 
-	echo '<div class="bigform passwordreset">';
-	echo '<h2>Vygenerováno nové heslo</h2>';
-	echo '<p>Na registrovaný e-mail byla odeslána zpráva s dalšími pokyny.</p>';
+	echo '<div class="container" style="margin-top:30px"><div class="col-md-4 col-md-offset-4"><div class="panel panel-default"><div class="panel-heading"><h3 class="panel-title"><strong>Vygenerováno nové heslo</strong></h3></div><div class="panel-body">';
+	echo "<div class='alert alert-default'>Na registrovaný e-mail byla odeslána zpráva s dalšími pokyny.</div>";
+	echo '</div></div></div></div>';
 }
 
 function performLogout()

@@ -96,7 +96,7 @@ function mainPageContents()
             if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanCreateAccount) echo '<li><a href="?action=createaccount">Založit uživatele</a></li>';
             if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanChangeUserAccess) echo '<li><a href="?action=manageusers">Spravovat uživatele</a></li>';
             if ($sepsLoggedUserMaxAccess & sepsAccessFlagsCanEditEventTypes) echo '<li><a href="?action=manageeventtypes">Spravovat typy událostí</a></li>';
-            echo '</ul></li>';
+            echo '</ul></li></ul>';
         }
 
         if (($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects) ||
@@ -111,7 +111,7 @@ function mainPageContents()
             if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions) echo '<li><a href="?action=manageglobalpermissions">Spravovat globální práva</a></li>';
             if ($sepsLoggedUserGlobalRights & (sepsGlobalAccessFlagsCanSendGlobalWebMessages | sepsGlobalAccessFlagsCanSendGlobalMailMessages)) echo '<li><a href="?action=globalmessaging">Poslat globální zprávu</a></li>';
             if ($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanViewLog) echo '<li><a href="?action=viewlog">Log</a></li>';
-            echo '</ul></li>';
+            echo '</ul></li></ul>';
         }
 
         echo '<ul class="nav navbar-nav navbar-right"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">' . htmlspecialchars($sepsLoggedUserCaption) . '<span class="caret"></span></a><ul class="dropdown-menu" role="menu">';

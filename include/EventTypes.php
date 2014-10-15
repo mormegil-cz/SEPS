@@ -4,8 +4,6 @@ function eventTypesForm()
 {
 	global $sepsLoggedUser, $sepsLoggedUsername;
 
-	echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
-	generateCsrfToken();
 	$projectId = getVariableOrNull('project');
 	if (!is_numeric($projectId)) $projectId = null;
 	$projectName = null;
@@ -16,12 +14,10 @@ function eventTypesForm()
 		if ($row)
 		{
 			$projectName = $row['title'];
-			echo "<input type='hidden' name='project' value='$projectId' />";
 		}
 		else $projectId = null;
 	}
 
-	echo '<div class="bottomform eventtypes">';
 	if (!$projectId)
 	{
 		$projectsFoundCount = 0;
@@ -37,8 +33,11 @@ function eventTypesForm()
 					$projectTitleFound = $row['title'];
 					break;
 				case 2:
-					echo '<h2>Správa typů událostí</h2>';
-					echo '<label for="project">Projekt:</label> <select name="project" id="project" onchange="javascript:this.form.submit()" />';
+                    echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
+                    generateCsrfToken();
+                    beginDialog('Správa typů událostí');
+                    beginDialogBody();
+					echo '<div class="form-group"><label for="project">Projekt:</label> <select name="project" id="project" class="form-control" onchange="javascript:this.form.submit()" />';
 					echo "<option value='$projectIdFound'>" . htmlspecialchars($projectTitleFound) . "</option>";
 					// fall-through!
 				default:
@@ -48,19 +47,26 @@ function eventTypesForm()
 		switch($projectsFoundCount)
 		{
 			case 0:
-				echo '<div class="errmsg">Nemáte oprávnění pro editaci typů událostí!</div>';
-				break;
+				alert('Nemáte oprávnění pro editaci typů událostí!', 'danger');
+				return;
 			case 1:
 				$projectId = $projectIdFound;
 				$projectName = $projectTitleFound;
-				echo "<input type='hidden' name='project' value='$projectId' />";
 				break;
 			default:
-				echo '</select>';
+				echo '</select></div>';
+                echo '<p class="text-right"><input type="submit" name="chooseproject" class="btn btn-primary btn-lg" value="Vybrat" /> <a href="?" class="btn btn-default btn-lg">Zavřít</a></p>';
+                echo '</form>';
+                endDialogBody();
+                endDialog();
+                return;
 		}
 	}
 	if ($projectId)
 	{
+        beginDialog('Správa typů událostí projektu ' . htmlspecialchars($projectName));
+        beginDialogBody();
+
 		$addcaption = getVariableOrNull('addcaption');
 		$addminusers = getVariableOrNull('addminusers');
 		if (!is_numeric($addminusers)) $addminusers = null;
@@ -91,18 +97,18 @@ function eventTypesForm()
 			case 'add':
 				if (!$addcaption || $addminusers < 0 || $addmaxusers <= 0)
 				{
-					echo '<div class="errmsg">Je potřeba vyplnit název a limity na počet účastníků</div>';
+					alert('Je potřeba vyplnit název a limity na počet účastníků', 'danger');
 					break;
 				}
 				if ($addminusers > $addmaxusers)
 				{
-					echo '<div class="errmsg">Minimum nemůže být vyšší než maximum</div>';
+					alert('Minimum nemůže být vyšší než maximum', 'danger');
 					break;
 				}
 				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, " . intval($addmaxguests) . ")"))
 				{
-					echo '<div class="infomsg">Nový typ vytvořen</div>';
 					logMessage("Uživatel $sepsLoggedUsername založil nový typ události '$addcaption' v projektu $projectName");
+					alert('Nový typ vytvořen', 'success');
 					$addcaption = $addminusers = $addmaxusers = $addmaxguests = null;
 				}
 				break;
@@ -113,124 +119,153 @@ function eventTypesForm()
 					if (mysql_query("UPDATE eventtypes SET title='" . mysql_real_escape_string($editcaption) . "' WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
-						echo '<div class="errmsg">Chyba při změně názvu</div>';
+                        alert('Chyba při změně názvu', 'danger');
 				}
 				if (($editminusers != null) && ($editmaxusers != null))
 				{
 					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers, minpeople=$editminusers WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
-						echo '<div class="errmsg">Chyba při změně kapacity</div>';
+                        alert('Chyba při změně kapacity', 'danger');
 				}
 				else if ($editminusers)
 				{
 					if (mysql_query("UPDATE eventtypes SET minpeople=$editminusers WHERE id=$editeventtype AND capacity>=$editminusers LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
-						echo '<div class="errmsg">Chyba při změně kapacity</div>';
+                        alert('Chyba při změně kapacity', 'danger');
 				}
 				else if ($editmaxusers)
 				{
 					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers WHERE id=$editeventtype AND minpeople<=$editmaxusers LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
-						echo '<div class="errmsg">Chyba při změně kapacity</div>';
+                        alert('Chyba při změně kapacity', 'danger');
 				}
 				if ($editmaxguests)
 				{
 					if (mysql_query("UPDATE eventtypes SET maxguests=$editmaxguests WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
 						$changes++;
 					else
-						echo '<div class="errmsg">Chyba při změně dovoleného počtu hostů</div>';
+                        alert('Chyba při změně dovoleného počtu hostů', 'danger');
 				}
 				if ($changes)
 				{
-					echo '<div class="infomsg">Změny provedeny</div>';
 					logMessage("Uživatel $sepsLoggedUsername upravil typ události #$editeventtype v projektu $projectName");
+					alert('Změny provedeny', 'success');
 					$editcaption = $editminusers = $editmaxusers = $editmaxguests = null;
 				}
 				break;
 			case 'remove':
 				if (!$removeeventtype)
 				{
-					echo '<div class="errmsg">Není co mazat</div>';
+					alert('Není co mazat', 'danger');
 					break;
 				}
 				if (mysql_query("DELETE FROM eventtypes WHERE eventtypes.id=$removeeventtype AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=eventtypes.id) LIMIT 1") && (mysql_affected_rows() > 0))
 				{
-					echo '<div class="infomsg">Typ byl smazán.</div>';
 					logMessage("Uživatel $sepsLoggedUsername smazal typ události #$removeeventtype v projektu $projectName");
+					alert('Typ byl smazán', 'success');
 				}
 				else
 				{
-					echo '<div class="errmsg">Nepodařilo se smazat typ. Nepoužívá se někde?</div>';
+					alert('Nepodařilo se smazat typ. Nepoužívá se někde?', 'danger');
 				}
 				break;
 			default:
-				if (getVariableOrNull('doexecute')) echo '<div class="errmsg">Musíte vybrat operaci, která se má provést.</div>';
+				if (getVariableOrNull('doexecute')) alert('Musíte vybrat operaci, která se má provést.', 'danger');
 		}
 
-		echo '<h2>Správa typů událostí projektu ' . htmlspecialchars($projectName) . '</h2>';
-		echo '<div class="formblock">';
-		echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="add" /> Přidat nový typ události<br />';
-		echo '<label for="addcaption">Název:</label> <input type="text" name="addcaption" id="addcaption" value="' . htmlspecialchars($addcaption) . '" /><br />';
-		echo '<label for="addminusers">Minimálně účastníků:</label> <input type="text" name="addminusers" id="addminusers" value="' . htmlspecialchars($addminusers) . '" /><br />';
-		echo '<label for="addmaxusers">Maximálně účastníků:</label> <input type="text" name="addmaxusers" id="addmaxusers" value="' . htmlspecialchars($addmaxusers) . '" /><br />';
-		echo '<label for="addmaxguests">Max. hostů na účastníka:</label> <input type="text" name="addmaxguests" id="addmaxguests" value="' . htmlspecialchars($addmaxguests) . '" /><br />';
+        echo '<ul class="nav nav-tabs" role="tablist">';
+        echo '<li class="active"><a href="#addeventtype" role="tab" data-toggle="tab">Přidat nový typ</a></li>';
+        echo '<li><a href="#editeventtype" role="tab" data-toggle="tab">Editovat existující typ</a></li>';
+        echo '<li><a href="#removeeventtype" role="tab" data-toggle="tab">Smazat existující typ</a></li>';
+        echo '</ul>';
+
+        echo '<div class="tab-content">';
+
+        echo '<div class="tab-pane active" id="addeventtype">';
+        echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
+        generateCsrfToken();
+        echo "<input type='hidden' name='project' value='$projectId' />";
+        echo "<input type='hidden' name='eventtypeaction' value='add' />";
+		echo '<div class="form-group"><label for="addcaption">Název:</label> <input type="text" name="addcaption" id="addcaption" class="form-control" value="' . htmlspecialchars($addcaption) . '" /></div>';
+		echo '<div class="form-group"><label for="addminusers">Minimálně účastníků:</label> <input type="number" name="addminusers" id="addminusers" class="form-control" value="' . htmlspecialchars($addminusers) . '" min="0" step="1" /></div>';
+		echo '<div class="form-group"><label for="addmaxusers">Maximálně účastníků:</label> <input type="number" name="addmaxusers" id="addmaxusers" class="form-control" value="' . htmlspecialchars($addmaxusers) . '" min="1" step="1" /></div>';
+		echo '<div class="form-group"><label for="addmaxguests">Max. hostů na účastníka:</label> <input type="number" name="addmaxguests" id="addmaxguests" class="form-control" value="' . htmlspecialchars($addmaxguests) . '" min="0" step="1" /></div>';
+        echo '<p class="text-right"><input type="submit" name="doexecute" class="btn btn-primary btn-lg" value="Provést změny" /> <a href="?" class="btn btn-default btn-lg">Zavřít</a></p>';
+        echo '</form>';
 		echo '</div>';
 
+        echo '<div class="tab-pane" id="editeventtype">';
+        echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
+        generateCsrfToken();
+        echo "<input type='hidden' name='project' value='$projectId' />";
+        echo "<input type='hidden' name='eventtypeaction' value='edit' />";
 		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId");
 		if (mysql_num_rows($query))
 		{
-			echo '<div class="formblock">';
-			echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="edit" /> Editovat existující typ události<br />';
-			echo '<label for="editeventtype">Editovaný typ události:</label> <select name="editeventtype" id="editeventtype">';
+			echo '<div class="form-group"><label for="editeventtype">Editovaný typ události:</label> <select name="editeventtype" id="editeventtype" class="form-control">';
 			while ($row = mysql_fetch_assoc($query))
 			{
 				echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
 			}
-			echo '</select><br />';
-			echo '<label for="editcaption">Název:</label> <input type="text" name="editcaption" id="editcaption" value="' . htmlspecialchars($editcaption) . '" /><br />';
-			echo '<label for="editminusers">Minimálně účastníků:</label> <input type="text" name="editminusers" id="editminusers" value="' . htmlspecialchars($editminusers) . '" /><br />';
-			echo '<label for="editmaxusers">Maximálně účastníků:</label> <input type="text" name="editmaxusers" id="editmaxusers" value="' . htmlspecialchars($editmaxusers) . '" /><br />';
-			echo '<label for="editmaxguests">Max. hostů na účastníka:</label> <input type="text" name="editmaxguests" id="editmaxguests" value="' . htmlspecialchars($editmaxguests) . '" /><br />';
-			echo '</div>';
+			echo '</select></div>';
+			echo '<div class="form-group"><label for="editcaption">Název:</label> <input type="text" name="editcaption" id="editcaption" class="form-control" value="' . htmlspecialchars($editcaption) . '" /></div>';
+			echo '<div class="form-group"><label for="editminusers">Minimálně účastníků:</label> <input type="number" name="editminusers" id="editminusers" class="form-control" value="' . htmlspecialchars($editminusers) . '" min="0" step="1" /></div>';
+			echo '<div class="form-group"><label for="editmaxusers">Maximálně účastníků:</label> <input type="number" name="editmaxusers" id="editmaxusers" class="form-control" value="' . htmlspecialchars($editmaxusers) . '" min="1" step="1" /></div>';
+			echo '<div class="form-group"><label for="editmaxguests">Max. hostů na účastníka:</label> <input type="number" name="editmaxguests" id="editmaxguests" class="form-control" value="' . htmlspecialchars($editmaxguests) . '" min="0" step="1" /></div>';
+            echo '<p class="text-right"><input type="submit" name="doexecute" class="btn btn-primary btn-lg" value="Provést změny" /> <a href="?" class="btn btn-default btn-lg">Zavřít</a></p>';
 		}
+        else
+        {
+            alert('V tomto projektu dosud nejsou definovány žádné typy událostí', 'danger');
+        }
+        echo '</form>';
+        echo '</div>';
 
+        echo '<div class="tab-pane" id="removeeventtype">';
+        echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
+        generateCsrfToken();
+        echo "<input type='hidden' name='project' value='$projectId' />";
+        echo "<input type='hidden' name='eventtypeaction' value='remove' />";
 		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=t.id)");
 		if (mysql_num_rows($query))
 		{
-			echo '<div class="formblock">';
-			echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="remove" /> Smazat typ události<br />';
-			echo '<label for="removeeventtype">Mazaný typ události:</label> <select name="removeeventtype" id="removeeventtype">';
+			echo '<div class="form-group"><label for="removeeventtype">Mazaný typ události:</label> <select name="removeeventtype" id="removeeventtype" class="form-control">';
 			while ($row = mysql_fetch_assoc($query))
 			{
 				echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
 			}
-			echo '</select>';
-			echo '</div>';
+			echo '</select></div>';
+            echo '<p class="text-right"><input type="submit" name="doexecute" class="btn btn-primary btn-lg" value="Provést změny" /> <a href="?" class="btn btn-default btn-lg">Zavřít</a></p>';
 		}
-	}
+        else
+        {
+            alert('V tomto projektu neexistuje žádný typ událostí, který by bylo možno smazat', 'danger');
+        }
+        echo '</form>';
+        echo '</div>';
 
-	echo '<input type="submit" name="doexecute" value="Provést změny" />';
+        echo '</div>';
 
-	if ($projectId)
-	{
-		echo '<div class="eventtypeslist"><table class="eventtypesoverview">';
-		echo '<thead><caption>Definované typy</caption></thead>';
-		echo '<tbody>';
+        endDialogBody();
+
+        beginDialogFooter();
+        echo '<div style="text-align: left">'; // záplata na .dialogfooter { text-align: right } v Bootstrapu
+        beginPanel('Definované typy');
+		echo '<table class="table">';
 		echo '<tr><th>Název</th><th>Min</th><th>Max</th><th>Hostů</th></tr>';
 		$query = mysql_query("SELECT t.title, t.minpeople, t.capacity, t.maxguests FROM eventtypes t WHERE t.project=$projectId");
 		while ($row = mysql_fetch_assoc($query))
 		{
 			echo '<tr><td>' . htmlspecialchars($row['title']) . "</td><td>$row[minpeople]</td><td>$row[capacity]</td><td>$row[maxguests]</td></tr>";
 		}
-		echo '</tbody>';
-		echo '</table></div>';
-	}
-
-	echo '</div>';
-	echo '</form>';
+		echo '</table>';
+        endPanel();
+        endDialogFooter();
+        endDialog();
+    }
 }
 
 function getAndCheckEventType($variablename, $projectid)

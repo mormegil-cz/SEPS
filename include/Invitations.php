@@ -492,18 +492,34 @@ function acceptedInvitation()
 		$userid = $founduser['id'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
 
-		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
+		if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysql_affected_rows() != 1)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
+			return FALSE;
+		}
 
 		// nastavit příznak ověření e-mailu
-		mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1");
+		if (!mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1") || mysql_affected_rows() != 1)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
+			return FALSE;
+		}
 
 		// označit pozvánku jako použitou
 		$invitationId = $invitation['id'];
-		mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1");
+		if (!mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysql_affected_rows() != 1)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
+			return FALSE;
+		}
 
 		mysql_query("COMMIT");
 
 		logMessage("Uživatel $username přijal pozvánku číslo $invitationCode");
+
 		return TRUE;
 	}
 	else
@@ -545,25 +561,49 @@ function acceptedInvitation()
 			. mysql_real_escape_string($email) . "', '"
 			. mysql_real_escape_string($jabber) . "', '"
 			. mysql_real_escape_string($skype) . "', '"
-			. mysql_real_escape_string($icq) . "', 1)"))
+			. mysql_real_escape_string($icq) . "', 1)")
+				|| mysql_affected_rows() != 1)
 		{
+			report_mysql_error();
 			mysql_query("ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se založit uživatele, zkuste to znovu.');
 			return FALSE;
 		}
 
 		$createduserQuery = mysql_query("SELECT u.id FROM users u WHERE u.username = '" . mysql_real_escape_string($username) . "'");
+		if (!$createduserQuery)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Nepodařilo se zpracovat uživatele, zkuste to znovu.');
+			return FALSE;
+		}
 		$createduser = mysql_fetch_assoc($createduserQuery);
+		if (!$createduser)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Nepodařilo se dohledat uživatele, zkuste to znovu.');
+			return FALSE;
+		}
 		$userid = $createduser['id'];
 
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
-		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)");
+		if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysql_affected_rows() != 1)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Uživatele se nepodařilo přidat do projektu, zkuste to znovu.');
+			return FALSE;
+		}
 
 		// označit pozvánku jako použitou
 		$invitationId = $invitation['id'];
-		mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1");
+		if (!mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysql_affected_rows() != 1)
+		{
+			mysql_query("ROLLBACK");
+			receivedInvitation($invitationCode, 'Nepodařilo se zpracovat, zkuste to znovu.');
+			return FALSE;
+		}
 
 		mysql_query("COMMIT");
 

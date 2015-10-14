@@ -1,20 +1,25 @@
 <?php
 
+function report_mysql_error()
+{
+	echo '<div class="errmsg">' . htmlspecialchars(mysql_error()) . '</div>';
+}
+
 function initDatabase()
 {
 	global $sepsDbServer, $sepsDbUser, $sepsDbPassword, $sepsDbDatabase;
 
-	$db = mysql_connect($sepsDbServer,$sepsDbUser,$sepsDbPassword);
-	$seldb=mysql_select_db($sepsDbDatabase);
-	if( !$db )
+	$db = mysql_connect($sepsDbServer, $sepsDbUser, $sepsDbPassword);
+	if (!$db)
 	{
-		$chyba = mysql_errno().": ".mysql_error();
-		echo( "<font align='center' color='red'><b>$chyba</b></font><br>" );
+		report_mysql_error();
+		die();
 	}
-	mysql_query("SET NAMES 'utf8'");
-}
-
-function report_mysql_error()
-{
-	echo '<div class="errmsg">' . htmlspecialchars(mysql_error()) . '</div>';
+	$seldb = mysql_select_db($sepsDbDatabase);
+	if (!$seldb)
+	{
+		report_mysql_error();
+		die();
+	}
+	mysql_set_charset('utf8');
 }

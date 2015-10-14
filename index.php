@@ -1,5 +1,7 @@
 <?php
 
+mb_internal_encoding('UTF-8');
+
 require_once('./include/Constants.php');
 require_once('./include/GlobalFunctions.php');
 require_once('./include/DefaultSettings.php');

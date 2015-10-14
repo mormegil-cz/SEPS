@@ -61,7 +61,7 @@ function getICalendar($onlyMine)
 	echoWrapped("X-WR-CALNAME:$sepsTitle\r\n", 75);
 	echoWrapped("X-WR-CALDESC:$sepsTitle\r\n", 75);
 
-	$startDate = mktime()-86400;
+	$startDate = time()-86400;
 	$limit = 500;
 
 	$events = $onlyMine ? getMyEventList($startDate, $limit) : getEventList($startDate, $limit);

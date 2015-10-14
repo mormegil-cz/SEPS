@@ -381,10 +381,10 @@ function printEventsCalendar($showSelectedDate)
 	echo '<div class="calendar"><table class="calendar"><caption>Kalendář plánovaných akcí</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
 
-	$today = mktime();
+	$today = time();
 	$todayStr = strftime('%d.&nbsp;%m.', $today);
 	$startDateArg = getVariableOrNull('date');
-	$startDate = $startDateArg ? $startDateArg : mktime();
+	$startDate = $startDateArg ? $startDateArg : time();
 	$startDate = 86400 * floor($startDate / 86400);
 	$selectedStr = strftime('%d.&nbsp;%m.', $startDate);
 	$startDateArray = getdate($startDate);

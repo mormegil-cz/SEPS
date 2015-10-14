@@ -5,7 +5,7 @@ require_once('./include/Events.php');
 function showEventList()
 {
 	$startDateArg = getVariableOrNull('date');
-	$startDate = $startDateArg ? $startDateArg : mktime();
+	$startDate = $startDateArg ? $startDateArg : time();
 	$startDate = 86400 * floor($startDate / 86400);
 	$limit = getVariableOrNull('limit');
 	if ($limit < 1) $limit = null;

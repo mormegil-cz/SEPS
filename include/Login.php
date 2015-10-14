@@ -158,6 +158,11 @@ function tryLogin($username, $password)
 	$hash = hashPassword($password);
 
 	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.password='$hash'");
+	if (!$query)
+	{
+		report_mysql_error();
+		return FALSE;
+	}
 	$row = mysql_fetch_row($query);
 	if ($row) return $row[0]; else return FALSE;
 }
@@ -191,7 +196,7 @@ function generateCsrfToken()
 
 function verifyCsrfToken()
 {
-	$sessionToken = $_SESSION['csrftoken'];
+	$sessionToken = isset($_SESSION['csrftoken']) ? $_SESSION['csrftoken'] : null;
 	$formToken = getVariableOrNull('csrftoken');
 	if ($sessionToken && $formToken && $formToken == $sessionToken) return true;
 

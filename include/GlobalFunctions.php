@@ -71,6 +71,41 @@ function escapeQuotedString($text)
 	return $text;
 }
 
+/*
+// Debugging dump
+function dumpStr($str)
+{
+	echo "<pre>\n";
+	$len = strlen($str);
+	$line = '';
+	for ($i = 0; $i < $len; ++$i)
+	{
+		$ch = $str[$i];
+
+		$code = ord($ch);
+
+		$line .= ($code >= 32 && $code <= 126) ? htmlspecialchars($ch) : '.';
+		echo dechex($code);
+		echo ' ';
+		if (($i % 16) == 15)
+		{
+			echo '    ';
+			echo $line;
+			echo "\n";
+			$line = '';
+		}
+	}
+	if ($line)
+	{
+		// TODO: Padding
+		echo '    ';
+		echo $line;
+		echo "\n";
+	}
+	echo "</pre>\n";
+}
+*/
+
 if (function_exists('imap_8bit'))
 {
 	function encodeMailHeader($string, $encoding='UTF-8')

@@ -15,7 +15,7 @@ class HolidayCalendar
 		{
 			case 'CZ':
 				$this->m_WeekendDays = array( 5 => true, 6 => true );
-				$this->m_EasterBasedHolidays = array( 1 );
+				$this->m_EasterBasedHolidays = array( 1, -2 );
 				break;
 		}
 	}
@@ -38,7 +38,7 @@ class HolidayCalendar
 
 		return $this->m_Cache;
 	}
-	
+
 	function computeHolidays($year)
 	{
 		$leapYear = (($year % 4) == 0) && ((($year % 100) != 0) || (($year % 400) == 0));

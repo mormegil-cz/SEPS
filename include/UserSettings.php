@@ -50,10 +50,10 @@ function displayUserSettingsForm($username, $usercaption, $firstname, $lastname,
 
 function userSettingsForm()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
-	$query = mysql_query("SELECT username, caption, firstname, lastname, email, emailvalidated, icq, jabber, skype FROM users WHERE id=$sepsLoggedUser");
-	$userData = mysql_fetch_assoc($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT username, caption, firstname, lastname, email, emailvalidated, icq, jabber, skype FROM users WHERE id=$sepsLoggedUser");
+	$userData = mysqli_fetch_assoc($query);
 	if (!$userData) return;
 
 	$username = $userData['username'];
@@ -74,7 +74,7 @@ function saveUserSettings()
 	require_once('./include/Login.php');
 	require_once('./include/Invitations.php');
 
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$username = getVariableOrNull('username');
 	$usercaption = getVariableOrNull('usercaption');
@@ -128,8 +128,8 @@ function saveUserSettings()
 		return;
 	}
 
-	$queryCheck = mysql_query("SELECT id FROM users WHERE username='" . mysql_real_escape_string($username) . "' AND id!=$sepsLoggedUser LIMIT 1");
-	if (mysql_fetch_row($queryCheck))
+	$queryCheck = mysqli_query($sepsDbConnection, "SELECT id FROM users WHERE username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "' AND id!=$sepsLoggedUser LIMIT 1");
+	if (mysqli_fetch_row($queryCheck))
 	{
 		echo '<div class="errmsg">Vaše nové uživatelské jméno už se používá, zkuste jiné</div>';
 		displayUserSettingsForm($username, $usercaption, $firstname, $lastname, $email, $icq, $jabber, $skype, $currUsername, $currUsercaption, $currFirstname, $currLastname, $currEmail, $emailvalidated, $currIcq, $currJabber, $currSkype);
@@ -190,11 +190,11 @@ function saveUserSettings()
 	foreach($items as $column => $value)
 	{
 		if ($sql) $sql .= ', ';
-		$sql .= "$column='" . mysql_real_escape_string($value) . "'";
+		$sql .= "$column='" . mysqli_real_escape_string($sepsDbConnection, $value) . "'";
 	}
-	$sql = "UPDATE users SET $sql WHERE id=$sepsLoggedUser AND username='" . mysql_real_escape_string($currUsername) . "' LIMIT 1";
+	$sql = "UPDATE users SET $sql WHERE id=$sepsLoggedUser AND username='" . mysqli_real_escape_string($sepsDbConnection, $currUsername) . "' LIMIT 1";
 
-	if (mysql_query($sql) && (mysql_affected_rows() > 0))
+	if (mysqli_query($sepsDbConnection, $sql) && (mysqli_affected_rows($sepsDbConnection) > 0))
 		echo '<div class="infomsg">Změny nastavení provedeny</div>';
 	else
 	{
@@ -215,10 +215,10 @@ function saveUserSettings()
 
 function sendVerificationEmail()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
-	$query = mysql_query("SELECT username, email FROM users WHERE id=$sepsLoggedUser");
-	$userData = mysql_fetch_assoc($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT username, email FROM users WHERE id=$sepsLoggedUser");
+	$userData = mysqli_fetch_assoc($query);
 
 	if ($userData && sendInvitationTo($userData['username'], $userData['email'], 0, null, sepsEmailCodeEmailConfirmation))
 		echo '<div class="infomsg">Na vaši adresu (<tt>' . htmlspecialchars($userData[0]) . '</tt>) byl odeslán potvrzovací e-mail, postupujte podle v něm uvedených instrukcí.</div>';

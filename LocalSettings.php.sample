@@ -10,7 +10,7 @@ $sepsDbUser = 'root';
 $sepsDbPassword = 'heslo';
 $sepsDbDatabase = 'seps';
 
-$sepsAdminMail = 'petrk@alsoft.cz';
+$sepsAdminMail = 'user@example.invalid';
 
 $sepsShowIcqStatus = false;
 $sepsCountry = 'CZ';

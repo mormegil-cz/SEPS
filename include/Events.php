@@ -144,10 +144,12 @@ class Event
 
 	public static function Load($id)
 	{
+		global $sepsDbConnection;
+
 		if (!is_numeric($id)) return null;
-		$query = mysql_query("SELECT e.title, e.date, t.minpeople, t.capacity, t.maxguests FROM events e INNER JOIN eventtypes t ON e.eventtype=t.id WHERE e.id=$id");
+		$query = mysqli_query($sepsDbConnection, "SELECT e.title, e.date, t.minpeople, t.capacity, t.maxguests FROM events e INNER JOIN eventtypes t ON e.eventtype=t.id WHERE e.id=$id");
 		if (!$query) return null;
-		$row = mysql_fetch_assoc($query);
+		$row = mysqli_fetch_assoc($query);
 		if (!$row) return null;
 
 		$eventTitle = $row['title'];
@@ -156,8 +158,8 @@ class Event
 		$eventCapacity = $row['capacity'];
 		$maxGuests = $row['maxguests'];
 
-		$query = mysql_query("SELECT COUNT(*), SUM(guests) FROM subscriptions WHERE event=$id");
-		$subscriptionCountRow = mysql_fetch_row($query);
+		$query = mysqli_query($sepsDbConnection, "SELECT COUNT(*), SUM(guests) FROM subscriptions WHERE event=$id");
+		$subscriptionCountRow = mysqli_fetch_row($query);
 		$eventSubscriberCount = $subscriptionCountRow[0] + $subscriptionCountRow[1];
 
 		return new Event($id, $eventTitle, $eventDate, $eventSubscriberCount, $eventMinSubscribers, $eventCapacity, $maxGuests);
@@ -223,8 +225,10 @@ class Event
 
 	function getListOfSubscribers()
 	{
+		global $sepsDbConnection;
+
 		$eid = $this->m_ID;
-		$query = mysql_query(
+		$query = mysqli_query($sepsDbConnection, 
 			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, (up.priority+s.priority) AS priority, s.guests
 			FROM subscriptions s
 			INNER JOIN users u ON s.user=u.id
@@ -235,7 +239,7 @@ class Event
 			ORDER BY up.priority+s.priority DESC, s.timestamp ASC");
 		if (!$query) return null;
 		$result = array();
-		while ($row = mysql_fetch_assoc($query))
+		while ($row = mysqli_fetch_assoc($query))
 		{
 			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], $row['priority'], $row['guests']);
 		}
@@ -244,8 +248,10 @@ class Event
 
 	function getListOfRejects()
 	{
+		global $sepsDbConnection;
+
 		$eid = $this->m_ID;
-		$query = mysql_query(
+		$query = mysqli_query($sepsDbConnection, 
 			"SELECT u.id, u.caption, u.email, u.icq, u.skype, u.jabber, r.comment
 			FROM rejections r
 			INNER JOIN users u ON r.user=u.id
@@ -253,7 +259,7 @@ class Event
 			ORDER BY r.timestamp ASC");
 		if (!$query) return null;
 		$result = array();
-		while ($row = mysql_fetch_assoc($query))
+		while ($row = mysqli_fetch_assoc($query))
 		{
 			$result[] = new Subscriber($row['id'], $row['caption'], $row['email'], $row['icq'], $row['skype'], $row['jabber'], 0, 0);
 		}
@@ -262,14 +268,16 @@ class Event
 	
 	function getUserAccessAndPriority($userid)
 	{
+		global $sepsDbConnection;
+
 		$eventid = $this->m_ID;
-		$query = mysql_query(
+		$query = mysqli_query($sepsDbConnection, 
 			"SELECT access, priority
 			FROM usersprojects up
 			INNER JOIN eventtypes t ON t.project=up.project
 			INNER JOIN events e ON e.eventtype=t.id
 			WHERE e.id=$eventid AND up.user=$userid");
-		$row = mysql_fetch_assoc($query);
+		$row = mysqli_fetch_assoc($query);
 		if (!$row) return array(0, 0);
 		return array($row['access'], $row['priority']);
 	}
@@ -282,12 +290,14 @@ class Event
 
 	function getDescription()
 	{
+		global $sepsDbConnection;
+
 		if ($this->m_Description == null)
 		{
 			$id = $this->m_ID;
-			$query = mysql_query("SELECT description FROM events WHERE id=$id");
+			$query = mysqli_query($sepsDbConnection, "SELECT description FROM events WHERE id=$id");
 			if (!$query) return null;
-			$result = mysql_fetch_array($query);
+			$result = mysqli_fetch_array($query);
 			if (!$result) return null;
 			$this->m_Description = $result[0];
 		}
@@ -296,12 +306,14 @@ class Event
 
 	function getDescriptionHtml()
 	{
+		global $sepsDbConnection;
+
 		if ($this->m_DescriptionHtml == null)
 		{
 			$id = $this->m_ID;
-			$query = mysql_query("SELECT descriptionhtml FROM events WHERE id=$id");
+			$query = mysqli_query($sepsDbConnection, "SELECT descriptionhtml FROM events WHERE id=$id");
 			if (!$query) return null;
-			$result = mysql_fetch_array($query);
+			$result = mysqli_fetch_array($query);
 			if (!$result) return null;
 			$this->m_DescriptionHtml = $result[0];
 		}
@@ -311,9 +323,9 @@ class Event
 
 function findEvents($date)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests, up.access,
 				(SELECT COUNT(*) + SUM(guests) FROM subscriptions s WHERE s.event=e.id) AS subscribercount
 		FROM events e
@@ -324,7 +336,7 @@ function findEvents($date)
 	if (!$query) return null;
 
 	$result = array();
-	while ($row = mysql_fetch_assoc($query))
+	while ($row = mysqli_fetch_assoc($query))
 	{
 		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
 	}
@@ -333,9 +345,9 @@ function findEvents($date)
 
 function getEventList($fromdate, $limit)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests, up.access,
 				(SELECT COUNT(*) + SUM(guests) FROM subscriptions s WHERE s.event=e.id) AS subscribercount
 		FROM events e
@@ -346,7 +358,7 @@ function getEventList($fromdate, $limit)
 	if (!$query) return null;
 
 	$result = array();
-	while ($row = mysql_fetch_assoc($query))
+	while ($row = mysqli_fetch_assoc($query))
 	{
 		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
 	}
@@ -355,9 +367,9 @@ function getEventList($fromdate, $limit)
 
 function getMyEventList($fromdate, $limit)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT e.id, e.title, e.date, t.minpeople, t.capacity, t.maxguests,
 				(SELECT COUNT(*) + SUM(guests) FROM subscriptions sc WHERE sc.event=e.id) AS subscribercount
 		FROM events e
@@ -367,7 +379,7 @@ function getMyEventList($fromdate, $limit)
 	if (!$query) return null;
 
 	$result = array();
-	while ($row = mysql_fetch_assoc($query))
+	while ($row = mysqli_fetch_assoc($query))
 	{
 		$result[] = new Event($row['id'], $row['title'], $row['date'], intval($row['subscribercount']), $row['minpeople'], $row['capacity'], $row['maxguests']);
 	}
@@ -376,7 +388,7 @@ function getMyEventList($fromdate, $limit)
 
 function printEventsCalendar($showSelectedDate)
 {
-	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess, $sepsCountry;
+	global $sepsCalendarWeeks, $sepsLoggedUserMaxAccess, $sepsCountry, $sepsDbConnection;
 
 	echo '<div class="calendar"><table class="calendar"><caption>Kalendář plánovaných akcí</caption>';
 	echo '<tr><th>Po</th><th>Út</th><th>St</th><th>Čt</th><th>Pá</th><th>So</th><th>Ne</th></tr>';
@@ -591,7 +603,7 @@ function printEventDetails($eid)
 
 function insertToSubscriptionsOrRejections($eid, $tablename)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -602,12 +614,12 @@ function insertToSubscriptionsOrRejections($eid, $tablename)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsHasAccess)) return;
 
-	$query = mysql_query("SELECT COUNT(*) FROM events e LEFT JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser LEFT JOIN rejections r ON r.event=e.id AND r.user=$sepsLoggedUser WHERE e.id=$eid AND (s.event IS NOT NULL OR r.event IS NOT NULL)");
-	$result = mysql_fetch_row($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT COUNT(*) FROM events e LEFT JOIN subscriptions s ON s.event=e.id AND s.user=$sepsLoggedUser LEFT JOIN rejections r ON r.event=e.id AND r.user=$sepsLoggedUser WHERE e.id=$eid AND (s.event IS NOT NULL OR r.event IS NOT NULL)");
+	$result = mysqli_fetch_row($query);
 	if ($result[0] == 0)
 	{
 		$currdate = strftime('%Y-%m-%d %H:%M:%S');
-		mysql_query("INSERT INTO $tablename(user, event, timestamp) VALUES ($sepsLoggedUser, $eid, '$currdate')");
+		mysqli_query($sepsDbConnection, "INSERT INTO $tablename(user, event, timestamp) VALUES ($sepsLoggedUser, $eid, '$currdate')");
 	}
 }
 
@@ -623,7 +635,7 @@ function rejectEvent($eid)
 
 function unsubscribeFromEvent($eid)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -634,25 +646,25 @@ function unsubscribeFromEvent($eid)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsHasAccess)) return;
 
-	mysql_query("DELETE FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
-	mysql_query("DELETE FROM rejections WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	mysqli_query($sepsDbConnection, "DELETE FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	mysqli_query($sepsDbConnection, "DELETE FROM rejections WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
 }
 
 function newEventForm($date)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$availableTypes = array();
 	$dateStr = strftime('%Y%m%d', $date);
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 			"SELECT t.id, t.title
 			FROM usersprojects up
 			INNER JOIN projects p ON up.project=p.id
 			INNER JOIN eventtypes t ON t.project=p.id
 			WHERE up.user=$sepsLoggedUser AND (up.access & " . sepsAccessFlagsCanCreateEvents . ") != 0
 			ORDER BY t.title");
-	while ($row = mysql_fetch_assoc($query))
+	while ($row = mysqli_fetch_assoc($query))
 	{
 		$availableTypes[$row['id']] = htmlspecialchars($row['title']);
 	}
@@ -683,7 +695,7 @@ function newEventForm($date)
 
 function createNewEvent()
 {
-	global $sepsLoggedUser, $sepsLoggedUsername;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDbConnection;
 
 	$atDate = getVariableOrNull('date');
 	$eventTitle = getVariableOrNull('title');
@@ -693,10 +705,10 @@ function createNewEvent()
 	// TODO: check permissions
 	// TODO: check time
 
-	mysql_query(
+	mysqli_query($sepsDbConnection, 
 		"INSERT INTO events (title, date, eventtype)
-			VALUES ('" . mysql_real_escape_string($eventTitle) . "', '" . strftime('%Y%m%d', $atDate) . "', " . $eventType . ")");
-	if (mysql_affected_rows() != 1)
+			VALUES ('" . mysqli_real_escape_string($sepsDbConnection, $eventTitle) . "', '" . strftime('%Y%m%d', $atDate) . "', " . $eventType . ")");
+	if (mysqli_affected_rows($sepsDbConnection) != 1)
 	{
 		report_mysql_error();
 		return;
@@ -707,7 +719,7 @@ function createNewEvent()
 
 function deleteEvent($eid)
 {
-	global $sepsLoggedUser, $sepsLoggedUsername;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDbConnection;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -718,26 +730,26 @@ function deleteEvent($eid)
 	$access = $event->getUserAccess($sepsLoggedUser);
 	if (!($access & sepsAccessFlagsCanDeleteEvents)) return;
 
-	mysql_query('BEGIN');
-	mysql_query("DELETE FROM subscriptions WHERE event=$eid");
-	mysql_query("DELETE FROM rejections WHERE event=$eid");
-	$query = mysql_query("DELETE FROM events WHERE events.id=$eid LIMIT 1");
-	if ($query && (mysql_affected_rows() > 0))
+	mysqli_query($sepsDbConnection, 'BEGIN');
+	mysqli_query($sepsDbConnection, "DELETE FROM subscriptions WHERE event=$eid");
+	mysqli_query($sepsDbConnection, "DELETE FROM rejections WHERE event=$eid");
+	$query = mysqli_query($sepsDbConnection, "DELETE FROM events WHERE events.id=$eid LIMIT 1");
+	if ($query && (mysqli_affected_rows($sepsDbConnection) > 0))
 	{
 	    logMessage("Uživatel $sepsLoggedUsername smazal událost #$eid");
-		mysql_query('COMMIT');
+		mysqli_query($sepsDbConnection, 'COMMIT');
 		echo '<div class="infomsg">Událost smazána</div>';
 	}
 	else
 	{
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		echo '<div class="errmsg">Nelze smazat událost</div>';
 	}
 }
 
 function changeGuestCount($eid, $guestcount)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -751,8 +763,8 @@ function changeGuestCount($eid, $guestcount)
 		return;
 	}
 
-	$query = mysql_query("SELECT user, event FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
-	if (!mysql_fetch_row($query))
+	$query = mysqli_query($sepsDbConnection, "SELECT user, event FROM subscriptions WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	if (!mysqli_fetch_row($query))
 	{
 		return;
 	}
@@ -762,12 +774,12 @@ function changeGuestCount($eid, $guestcount)
 	if ($guestcount > $maxguests) $guestcount = $maxguests;
 	if ($guestcount < 0) $guestcount = 0;
 
-	mysql_query("UPDATE subscriptions SET guests=$guestcount WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
+	mysqli_query($sepsDbConnection, "UPDATE subscriptions SET guests=$guestcount WHERE user=$sepsLoggedUser AND event=$eid LIMIT 1");
 }
 
 function changeDescription($eid, $description)
 {
-	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDescriptionParser;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDescriptionParser, $sepsDbConnection;
 
 	$event = Event::Load($eid);
 	if (!$event) return;
@@ -785,10 +797,10 @@ function changeDescription($eid, $description)
 		return;
 	}
 
-	$query = mysql_query("UPDATE events SET description='" . mysql_real_escape_string($description) .
-							"', descriptionhtml='" . mysql_real_escape_string($descriptionhtml) ."' WHERE events.id=$eid LIMIT 1");
+	$query = mysqli_query($sepsDbConnection, "UPDATE events SET description='" . mysqli_real_escape_string($sepsDbConnection, $description) .
+							"', descriptionhtml='" . mysqli_real_escape_string($sepsDbConnection, $descriptionhtml) ."' WHERE events.id=$eid LIMIT 1");
 
-	if ($query && (mysql_affected_rows() > 0))
+	if ($query && (mysqli_affected_rows($sepsDbConnection) > 0))
 	{
 	    logMessage("Uživatel $sepsLoggedUsername upravil popis události #$eid");
 		echo '<div class="infomsg">Upravený popis uložen</div>';

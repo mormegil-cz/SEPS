@@ -2,7 +2,7 @@
 
 function eventTypesForm()
 {
-	global $sepsLoggedUser, $sepsLoggedUsername;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDbConnection;
 
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="manageeventtypes" />';
 	generateCsrfToken();
@@ -11,8 +11,8 @@ function eventTypesForm()
 	$projectName = null;
 	if ($projectId)
 	{
-		$nameQuery = mysql_query("SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
-		$row = mysql_fetch_assoc($nameQuery);
+		$nameQuery = mysqli_query($sepsDbConnection, "SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
+		$row = mysqli_fetch_assoc($nameQuery);
 		if ($row)
 		{
 			$projectName = $row['title'];
@@ -26,8 +26,8 @@ function eventTypesForm()
 	{
 		$projectsFoundCount = 0;
 		$projectIdFound = null;
-		$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
-		while ($row = mysql_fetch_assoc($projectsQuery))
+		$projectsQuery = mysqli_query($sepsDbConnection, "SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanEditEventTypes);
+		while ($row = mysqli_fetch_assoc($projectsQuery))
 		{
 			$projectsFoundCount++;
 			switch ($projectsFoundCount)
@@ -99,7 +99,7 @@ function eventTypesForm()
 					echo '<div class="errmsg">Minimum nemůže být vyšší než maximum</div>';
 					break;
 				}
-				if (mysql_query("INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysql_real_escape_string($addcaption) . "', $addmaxusers, $addminusers, $projectId, " . intval($addmaxguests) . ")"))
+				if (mysqli_query($sepsDbConnection, "INSERT INTO eventtypes (title, capacity, minpeople, project, maxguests) VALUES('" . mysqli_real_escape_string($sepsDbConnection, $addcaption) . "', $addmaxusers, $addminusers, $projectId, " . intval($addmaxguests) . ")"))
 				{
 					echo '<div class="infomsg">Nový typ vytvořen</div>';
 					logMessage("Uživatel $sepsLoggedUsername založil nový typ události '$addcaption' v projektu $projectName");
@@ -110,35 +110,35 @@ function eventTypesForm()
 				$changes = 0;
 				if ($editcaption)
 				{
-					if (mysql_query("UPDATE eventtypes SET title='" . mysql_real_escape_string($editcaption) . "' WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
+					if (mysqli_query($sepsDbConnection, "UPDATE eventtypes SET title='" . mysqli_real_escape_string($sepsDbConnection, $editcaption) . "' WHERE id=$editeventtype LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně názvu</div>';
 				}
 				if (($editminusers != null) && ($editmaxusers != null))
 				{
-					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers, minpeople=$editminusers WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
+					if (mysqli_query($sepsDbConnection, "UPDATE eventtypes SET capacity=$editmaxusers, minpeople=$editminusers WHERE id=$editeventtype LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
 				else if ($editminusers)
 				{
-					if (mysql_query("UPDATE eventtypes SET minpeople=$editminusers WHERE id=$editeventtype AND capacity>=$editminusers LIMIT 1") && (mysql_affected_rows() > 0))
+					if (mysqli_query($sepsDbConnection, "UPDATE eventtypes SET minpeople=$editminusers WHERE id=$editeventtype AND capacity>=$editminusers LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
 				else if ($editmaxusers)
 				{
-					if (mysql_query("UPDATE eventtypes SET capacity=$editmaxusers WHERE id=$editeventtype AND minpeople<=$editmaxusers LIMIT 1") && (mysql_affected_rows() > 0))
+					if (mysqli_query($sepsDbConnection, "UPDATE eventtypes SET capacity=$editmaxusers WHERE id=$editeventtype AND minpeople<=$editmaxusers LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně kapacity</div>';
 				}
 				if ($editmaxguests)
 				{
-					if (mysql_query("UPDATE eventtypes SET maxguests=$editmaxguests WHERE id=$editeventtype LIMIT 1") && (mysql_affected_rows() > 0))
+					if (mysqli_query($sepsDbConnection, "UPDATE eventtypes SET maxguests=$editmaxguests WHERE id=$editeventtype LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 						$changes++;
 					else
 						echo '<div class="errmsg">Chyba při změně dovoleného počtu hostů</div>';
@@ -156,7 +156,7 @@ function eventTypesForm()
 					echo '<div class="errmsg">Není co mazat</div>';
 					break;
 				}
-				if (mysql_query("DELETE FROM eventtypes WHERE eventtypes.id=$removeeventtype AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=eventtypes.id) LIMIT 1") && (mysql_affected_rows() > 0))
+				if (mysqli_query($sepsDbConnection, "DELETE FROM eventtypes WHERE eventtypes.id=$removeeventtype AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=eventtypes.id) LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 				{
 					echo '<div class="infomsg">Typ byl smazán.</div>';
 					logMessage("Uživatel $sepsLoggedUsername smazal typ události #$removeeventtype v projektu $projectName");
@@ -179,13 +179,13 @@ function eventTypesForm()
 		echo '<label for="addmaxguests">Max. hostů na účastníka:</label> <input type="text" name="addmaxguests" id="addmaxguests" value="' . htmlspecialchars($addmaxguests) . '" /><br />';
 		echo '</div>';
 
-		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId");
-		if (mysql_num_rows($query))
+		$query = mysqli_query($sepsDbConnection, "SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId");
+		if (mysqli_num_rows($query))
 		{
 			echo '<div class="formblock">';
 			echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="edit" /> Editovat existující typ události<br />';
 			echo '<label for="editeventtype">Editovaný typ události:</label> <select name="editeventtype" id="editeventtype">';
-			while ($row = mysql_fetch_assoc($query))
+			while ($row = mysqli_fetch_assoc($query))
 			{
 				echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
 			}
@@ -197,13 +197,13 @@ function eventTypesForm()
 			echo '</div>';
 		}
 
-		$query = mysql_query("SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=t.id)");
-		if (mysql_num_rows($query))
+		$query = mysqli_query($sepsDbConnection, "SELECT t.id, t.title FROM eventtypes t WHERE t.project=$projectId AND NOT EXISTS (SELECT e.id FROM events e WHERE e.eventtype=t.id)");
+		if (mysqli_num_rows($query))
 		{
 			echo '<div class="formblock">';
 			echo '<input class="formblockchooser" type="radio" name="eventtypeaction" value="remove" /> Smazat typ události<br />';
 			echo '<label for="removeeventtype">Mazaný typ události:</label> <select name="removeeventtype" id="removeeventtype">';
-			while ($row = mysql_fetch_assoc($query))
+			while ($row = mysqli_fetch_assoc($query))
 			{
 				echo "<option value='$row[id]'>" . htmlspecialchars($row['title']) . "</option>";
 			}
@@ -220,8 +220,8 @@ function eventTypesForm()
 		echo '<thead><caption>Definované typy</caption></thead>';
 		echo '<tbody>';
 		echo '<tr><th>Název</th><th>Min</th><th>Max</th><th>Hostů</th></tr>';
-		$query = mysql_query("SELECT t.title, t.minpeople, t.capacity, t.maxguests FROM eventtypes t WHERE t.project=$projectId");
-		while ($row = mysql_fetch_assoc($query))
+		$query = mysqli_query($sepsDbConnection, "SELECT t.title, t.minpeople, t.capacity, t.maxguests FROM eventtypes t WHERE t.project=$projectId");
+		while ($row = mysqli_fetch_assoc($query))
 		{
 			echo '<tr><td>' . htmlspecialchars($row['title']) . "</td><td>$row[minpeople]</td><td>$row[capacity]</td><td>$row[maxguests]</td></tr>";
 		}
@@ -235,9 +235,11 @@ function eventTypesForm()
 
 function getAndCheckEventType($variablename, $projectid)
 {
+	global $sepsDbConnection;
+
 	$id = getVariableOrNull($variablename);
 	if (!is_numeric($id)) return null;
-	$query = mysql_query("SELECT t.id FROM eventtypes t WHERE t.id=$id AND t.project=$projectid");
-	if (!mysql_fetch_row($query)) return null;
+	$query = mysqli_query($sepsDbConnection, "SELECT t.id FROM eventtypes t WHERE t.id=$id AND t.project=$projectid");
+	if (!mysqli_fetch_row($query)) return null;
 	return $id;
 }

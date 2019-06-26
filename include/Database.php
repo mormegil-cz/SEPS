@@ -2,24 +2,25 @@
 
 function report_mysql_error()
 {
-	echo '<div class="errmsg">' . htmlspecialchars(mysql_error()) . '</div>';
+	global $sepsDbConnection;
+	echo '<div class="errmsg">' . htmlspecialchars(mysqli_error($sepsDbConnection)) . '</div>';
 }
 
 function initDatabase()
 {
-	global $sepsDbServer, $sepsDbUser, $sepsDbPassword, $sepsDbDatabase;
+	global $sepsDbServer, $sepsDbUser, $sepsDbPassword, $sepsDbDatabase, $sepsDbConnection;
 
-	$db = mysql_connect($sepsDbServer, $sepsDbUser, $sepsDbPassword);
-	if (!$db)
+	$sepsDbConnection = mysqli_connect($sepsDbServer,  $sepsDbUser,  $sepsDbPassword);
+	if (!$sepsDbConnection)
 	{
 		report_mysql_error();
 		die();
 	}
-	$seldb = mysql_select_db($sepsDbDatabase);
+	$seldb = mysqli_select_db($sepsDbConnection, $sepsDbDatabase);
 	if (!$seldb)
 	{
 		report_mysql_error();
 		die();
 	}
-	mysql_set_charset('utf8');
+	((bool)mysqli_set_charset($sepsDbConnection, "utf8"));
 }

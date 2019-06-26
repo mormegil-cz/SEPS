@@ -33,6 +33,8 @@ function passwordResetForm($errmsg = null)
 
 function sendPasswordReset()
 {
+	global $sepsDbConnection;
+
 	$username = getVariableOrNull('username');
 	$email = strtolower(trim(getVariableOrNull('email')));
 
@@ -49,21 +51,21 @@ function sendPasswordReset()
 	$query = null;
 	if ($username)
 	{
-		$query = mysql_query("SELECT id, username, email FROM users WHERE username='" . mysql_real_escape_string($username) . "'");
+		$query = mysqli_query($sepsDbConnection, "SELECT id, username, email FROM users WHERE username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "'");
 	}
 	else
 	{
-		$query = mysql_query("SELECT id, username, email FROM users WHERE email='" . mysql_real_escape_string($email) . "' AND emailvalidated=1 LIMIT 2");
+		$query = mysqli_query($sepsDbConnection, "SELECT id, username, email FROM users WHERE email='" . mysqli_real_escape_string($sepsDbConnection, $email) . "' AND emailvalidated=1 LIMIT 2");
 	}
 
-	$rows = mysql_num_rows($query);
+	$rows = mysqli_num_rows($query);
 	if ($rows != 1)
 	{
 		passwordResetForm($rows == 0 ? 'Žádný uživatel neodpovídá zadaným údajům' : 'Takovou e-mailovou adresu má více uživatelů, pro jejich rozlišení byste museli použít uživatelské jméno místo e-mailu');
 		return;
 	}
 
-	$user = mysql_fetch_assoc($query);
+	$user = mysqli_fetch_assoc($query);
 
 	if (!sendInvitationTo($user['id'], $user['username'], $user['email'], 0, null, sepsEmailCodePasswordReset))
 	{
@@ -121,12 +123,12 @@ function performLogin()
 
 function loadLoggedUserInformation()
 {
-	global $sepsLoggedUser, $sepsLoggedUsername, $sepsLoggedUserHasUnvalidatedEmail, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsLoggedUserGlobalRights;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsLoggedUserHasUnvalidatedEmail, $sepsLoggedUserCaption, $sepsLoggedUserMaxAccess, $sepsLoggedUserEmail, $sepsLoggedUserGlobalRights, $sepsDbConnection;
 
 	if (!$sepsLoggedUser) return;
 
-	$query = mysql_query("SELECT u.caption, u.username, u.email, u.emailvalidated, u.globalrights FROM users u WHERE u.id=$sepsLoggedUser");
-	$row = mysql_fetch_assoc($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT u.caption, u.username, u.email, u.emailvalidated, u.globalrights FROM users u WHERE u.id=$sepsLoggedUser");
+	$row = mysqli_fetch_assoc($query);
 	if (!$row)
 	{
 		performLogout();
@@ -139,8 +141,8 @@ function loadLoggedUserInformation()
 	$sepsLoggedUserHasUnvalidatedEmail = $row['email'] && !$sepsLoggedUserEmail;
 	$sepsLoggedUserGlobalRights = $row['globalrights'];
 
-	$query = mysql_query("SELECT BIT_OR(access) FROM usersprojects WHERE user=$sepsLoggedUser");
-	$access = mysql_fetch_row($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT BIT_OR(access) FROM usersprojects WHERE user=$sepsLoggedUser");
+	$access = mysqli_fetch_row($query);
 	$sepsLoggedUserMaxAccess = $access[0];
 }
 
@@ -152,28 +154,32 @@ function hashPassword($password)
 
 function tryLogin($username, $password)
 {
+	global $sepsDbConnection;
+
 	if (!$username) return FALSE;
 	$username = mb_strtolower(trim($username));
 
 	$hash = hashPassword($password);
 
-	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.password='$hash'");
+	$query = mysqli_query($sepsDbConnection, "SELECT u.id FROM users u WHERE u.username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "' AND u.password='$hash'");
 	if (!$query)
 	{
 		report_mysql_error();
 		return FALSE;
 	}
-	$row = mysql_fetch_row($query);
+	$row = mysqli_fetch_row($query);
 	if ($row) return $row[0]; else return FALSE;
 }
 
 function tryApiLogin($username, $token)
 {
+	global $sepsDbConnection;
+
 	if (!$username || !$token) return FALSE;
 	$username = mb_strtolower(trim($username));
 
-	$query = mysql_query("SELECT u.id FROM users u WHERE u.username='" . mysql_real_escape_string($username) . "' AND u.apitoken='" . mysql_real_escape_string($token) . "'");
-	$row = mysql_fetch_row($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT u.id FROM users u WHERE u.username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "' AND u.apitoken='" . mysqli_real_escape_string($sepsDbConnection, $token) . "'");
+	$row = mysqli_fetch_row($query);
 	if ($row) return $row[0]; else return FALSE;
 }
 

@@ -16,9 +16,10 @@ function showExportLink($caption, $token, $type, $params = '')
 
 function showExportMenu()
 {
-	global $sepsLoggedUser;
-	$query = mysql_query("SELECT apitoken FROM users WHERE id=$sepsLoggedUser");
-	$row = mysql_fetch_row($query);
+	global $sepsLoggedUser, $sepsDbConnection;
+
+	$query = mysqli_query($sepsDbConnection, "SELECT apitoken FROM users WHERE id=$sepsLoggedUser");
+	$row = mysqli_fetch_row($query);
 	$token = $row[0];
 
 	echo '<div class="exportmenu">';
@@ -52,8 +53,8 @@ function showExportMenu()
 
 function generateApiToken()
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	$token = generateRandomToken(14);
-	mysql_query("UPDATE users SET apitoken='$token' WHERE id=$sepsLoggedUser");
+	mysqli_query($sepsDbConnection, "UPDATE users SET apitoken='$token' WHERE id=$sepsLoggedUser");
 }

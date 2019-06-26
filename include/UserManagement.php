@@ -4,7 +4,7 @@ require_once('./include/Logging.php');
 
 function manageUsersForm()
 {
-	global $sepsLoggedUser, $sepsAccessFlagNames, $sepsLoggedUserCaption;
+	global $sepsLoggedUser, $sepsAccessFlagNames, $sepsLoggedUserCaption, $sepsDbConnection;
 
 	echo '<form action="?" method="post"><input type="hidden" name="action" value="manageusers" />';
 	generateCsrfToken();
@@ -13,8 +13,8 @@ function manageUsersForm()
 	$projectName = null;
 	if ($projectId)
 	{
-		$nameQuery = mysql_query("SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanChangeUserAccess);
-		$row = mysql_fetch_assoc($nameQuery);
+		$nameQuery = mysqli_query($sepsDbConnection, "SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanChangeUserAccess);
+		$row = mysqli_fetch_assoc($nameQuery);
 		if ($row)
 		{
 			$projectName = $row['title'];
@@ -33,8 +33,8 @@ function manageUsersForm()
 	{
 		$projectsFoundCount = 0;
 		$projectIdFound = null;
-		$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanChangeUserAccess);
-		while ($row = mysql_fetch_assoc($projectsQuery))
+		$projectsQuery = mysqli_query($sepsDbConnection, "SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanChangeUserAccess);
+		while ($row = mysqli_fetch_assoc($projectsQuery))
 		{
 			$projectsFoundCount++;
 			switch ($projectsFoundCount)
@@ -71,8 +71,8 @@ function manageUsersForm()
 	{
 		echo '<h2>Správa uživatelů projektu ' . htmlspecialchars($projectName) . '</h2>';
 		echo '<label for="user">Uživatel:</label> <select name="user" id="user">';
-		$query = mysql_query("SELECT u.id, u.caption, u.username FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
-		while ($row = mysql_fetch_assoc($query))
+		$query = mysqli_query($sepsDbConnection, "SELECT u.id, u.caption, u.username FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
+		while ($row = mysqli_fetch_assoc($query))
 		{
 			$title = $row['caption'];
 			if (!$title) $title = $row['username'];
@@ -112,8 +112,8 @@ function manageUsersForm()
 		echo '<thead><caption>Seznam uživatelů</caption></thead>';
 		echo '<tbody>';
 		echo '<tr><th>Uživatel</th><th>Priorita</th><th>Oprávnění</th></tr>';
-		$query = mysql_query("SELECT u.caption, u.username, up.priority, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
-		while ($row = mysql_fetch_assoc($query))
+		$query = mysqli_query($sepsDbConnection, "SELECT u.caption, u.username, up.priority, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
+		while ($row = mysqli_fetch_assoc($query))
 		{
 			$title = $row['caption'];
 			if (!$title) $title = $row['username'];
@@ -154,7 +154,7 @@ function userPriorityToString($priority)
 
 function modifyUser($projectId, $projectName)
 {
-	global $sepsLoggedUser, $sepsLoggedUserCaption,  $sepsLoggedUsername;
+	global $sepsLoggedUser, $sepsLoggedUserCaption,  $sepsLoggedUsername, $sepsDbConnection;
 
 	$user = getVariableOrNull('user');
 	if (!is_numeric($user))
@@ -162,8 +162,8 @@ function modifyUser($projectId, $projectName)
 		return;
 	}
 
-	$userQuery = mysql_query("SELECT u.id, u.caption, u.username, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.id=$user AND up.project=$projectId");
-	$userRow = mysql_fetch_assoc($userQuery);
+	$userQuery = mysqli_query($sepsDbConnection, "SELECT u.id, u.caption, u.username, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.id=$user AND up.project=$projectId");
+	$userRow = mysqli_fetch_assoc($userQuery);
 	if (!$userRow) return;
 	$userTitle = $userRow['caption'];
 	$username = $userRow['username'];
@@ -171,7 +171,7 @@ function modifyUser($projectId, $projectName)
 	$kickuser = getVariableOrNull('kickuser');
 	if ($kickuser == 1 || $kickuser == 'on')
 	{
-		if (mysql_query("DELETE FROM usersprojects WHERE user=$user AND project=$projectId LIMIT 1") && (mysql_affected_rows() > 0))
+		if (mysqli_query($sepsDbConnection, "DELETE FROM usersprojects WHERE user=$user AND project=$projectId LIMIT 1") && (mysqli_affected_rows($sepsDbConnection) > 0))
 		{
 			logMessage("Uživatel $sepsLoggedUsername vyřadil uživatele $username z projektu $projectName");
 			echo '<div class="infomsg">Uživatel byl vyřazen z projektu</div>';
@@ -179,7 +179,7 @@ function modifyUser($projectId, $projectName)
 		else
 		{
 			echo '<div class="errmsg">Nepodařilo se vyřadit uživatele z projektu</div>';
-			echo mysql_error();
+			echo mysqli_error($sepsDbConnection);
 		}
 		return;
 	}
@@ -215,7 +215,7 @@ function modifyUser($projectId, $projectName)
 	if ($query)
 	{
 		$query = 'UPDATE usersprojects SET ' . substr($query, 2) . " WHERE user=$user AND project=$projectId LIMIT 1";
-		if (mysql_query($query) && (mysql_affected_rows() > 0))
+		if (mysqli_query($sepsDbConnection, $query) && (mysqli_affected_rows($sepsDbConnection) > 0))
 		{
 			logMessage("Uživatel $sepsLoggedUsername upravil práva uživatele $username v projektu $projectName");
 			echo '<div class="infomsg">Uživatel byl upraven</div>';
@@ -229,7 +229,7 @@ function modifyUser($projectId, $projectName)
 
 function accountCreationForm($username = '', $password = '', $password2 = '', $errormessage = null)
 {
-	global $sepsLoggedUser;
+	global $sepsLoggedUser, $sepsDbConnection;
 
 	if ($errormessage)
 	{
@@ -242,8 +242,8 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 	$projectName = null;
 	if ($projectId)
 	{
-		$nameQuery = mysql_query("SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
-		$row = mysql_fetch_assoc($nameQuery);
+		$nameQuery = mysqli_query($sepsDbConnection, "SELECT p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE p.id=$projectId AND up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
+		$row = mysqli_fetch_assoc($nameQuery);
 		if ($row)
 		{
 			$projectName = $row['title'];
@@ -255,8 +255,8 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 	echo '<div class="bottomform usercreation">';
 	$projectsFoundCount = 0;
 	$projectIdFound = null;
-	$projectsQuery = mysql_query("SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
-	while ($row = mysql_fetch_assoc($projectsQuery))
+	$projectsQuery = mysqli_query($sepsDbConnection, "SELECT p.id, p.title FROM projects p INNER JOIN usersprojects up ON up.project=p.id WHERE up.user=$sepsLoggedUser AND up.access & " . sepsAccessFlagsCanCreateAccount);
+	while ($row = mysqli_fetch_assoc($projectsQuery))
 	{
 		$projectsFoundCount++;
 		switch ($projectsFoundCount)
@@ -300,7 +300,7 @@ function accountCreationForm($username = '', $password = '', $password2 = '', $e
 
 function createNewUser()
 {
-	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDefaultInvitationAccess;
+	global $sepsLoggedUser, $sepsLoggedUsername, $sepsDefaultInvitationAccess, $sepsDbConnection;
 
 	$project = intval(getVariableOrNull('project'));
 	$username = mb_strtolower(trim(getVariableOrNull('username')));
@@ -320,10 +320,10 @@ function createNewUser()
 		return;
 	}
 
-	mysql_query('BEGIN');
+	mysqli_query($sepsDbConnection, 'BEGIN');
 
-	$projectQuery = mysql_query("SELECT p.title, p.invitationaccessmask, up.access FROM projects p INNER JOIN usersprojects up ON up.project=p.id AND up.user=$sepsLoggedUser WHERE p.id=$project");
-	$projectRow = mysql_fetch_assoc($projectQuery);
+	$projectQuery = mysqli_query($sepsDbConnection, "SELECT p.title, p.invitationaccessmask, up.access FROM projects p INNER JOIN usersprojects up ON up.project=p.id AND up.user=$sepsLoggedUser WHERE p.id=$project");
+	$projectRow = mysqli_fetch_assoc($projectQuery);
 
 	if (!$projectRow || !($projectRow['access'] & sepsAccessFlagsCanCreateAccount))
 	{
@@ -334,10 +334,10 @@ function createNewUser()
 	$projectName = $projectRow['title'];
 	$givenaccess = $projectAccess & $sepsDefaultInvitationAccess & ~intval($projectRow['invitationaccessmask']);
 
-	$existingUser = mysql_fetch_assoc(mysql_query("SELECT u.id, up.access FROM users u LEFT JOIN usersprojects up ON up.user=u.id AND up.project=$project WHERE username='" . mysql_real_escape_string($username) . "'"));
+	$existingUser = mysqli_fetch_assoc(mysqli_query($sepsDbConnection, "SELECT u.id, up.access FROM users u LEFT JOIN usersprojects up ON up.user=u.id AND up.project=$project WHERE username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "'"));
 	if ($existingUser)
 	{
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		if (($existingUser['access'] & $givenaccess) == $givenaccess)
 		{
 			$errmsg = 'Zadané uživatelské jméno se již používá a tento uživatel již je členem tohoto projektu. Pokud chcete založit jiného uživatele, musíte zvolit jiné jméno.';
@@ -351,29 +351,29 @@ function createNewUser()
 		return;
 	}
 
-	$username_sql = mysql_real_escape_string($username);
-	if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
+	$username_sql = mysqli_real_escape_string($sepsDbConnection, $username);
+	if (!mysqli_query($sepsDbConnection, "INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
 			. $username_sql . "', '', '', '', '"
-			. mysql_real_escape_string(hashPassword($password)) . "', '', '', '', '', 0)") || mysql_affected_rows() != 1)
+			. mysqli_real_escape_string($sepsDbConnection, hashPassword($password)) . "', '', '', '', '', 0)") || mysqli_affected_rows($sepsDbConnection) != 1)
 	{
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		accountCreationForm($username, $password, $password2, 'Nepodařilo se založit uživatele, zkuste to později');
 		return;
 	}
 
-	$createdIdRow = mysql_fetch_row(mysql_query('SELECT id FROM users WHERE username="' . $username_sql . '"'));
+	$createdIdRow = mysqli_fetch_row(mysqli_query($sepsDbConnection, 'SELECT id FROM users WHERE username="' . $username_sql . '"'));
 	if (!$createdIdRow) return;
 	$createdId = $createdIdRow[0];
 
-	if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($createdId, $project, $givenaccess)") || mysql_affected_rows() != 1)
+	if (!mysqli_query($sepsDbConnection, "INSERT INTO usersprojects(user, project, access) VALUES($createdId, $project, $givenaccess)") || mysqli_affected_rows($sepsDbConnection) != 1)
 	{
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		accountCreationForm($username, $password, $password2, 'Nepodařilo se uživateli přidat přístup do projektu, zkuste to později');
 		return;
 	}
 
 	logMessage("Uživatel $sepsLoggedUsername založil nového uživatele $username a přidal jej do projektu $projectName");
 
-	mysql_query('COMMIT');
+	mysqli_query($sepsDbConnection, 'COMMIT');
 	echo '<div class="infomsg">Uživatel úspěšně založen</div>';
 }

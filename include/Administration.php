@@ -2,7 +2,7 @@
 
 function createProject()
 {
-	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights;
+	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights, $sepsDbConnection;
 
 	if (!($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanCreateProjects)) return;
 
@@ -15,41 +15,41 @@ function createProject()
 		return;
 	}
 
-	mysql_query('BEGIN');
+	mysqli_query($sepsDbConnection, 'BEGIN');
 
-    $checkquery = mysql_query("SELECT id FROM projects WHERE title='" . mysql_real_escape_string($projectName) . "'");
-    if (mysql_fetch_row($checkquery))
+    $checkquery = mysqli_query($sepsDbConnection, "SELECT id FROM projects WHERE title='" . mysqli_real_escape_string($sepsDbConnection, $projectName) . "'");
+    if (mysqli_fetch_row($checkquery))
 	{
 		echo '<div class="errmsg">Takto pojmenovaný projekt už existuje.</div>';
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		return;
 	}
 
 	$initialUserId = null;
 	if ($initialUser)
 	{
-		$userQuery = mysql_query("SELECT id FROM users WHERE username='" . mysql_real_escape_string($initialUser) . "'");
-		$users = mysql_fetch_row($userQuery);
+		$userQuery = mysqli_query($sepsDbConnection, "SELECT id FROM users WHERE username='" . mysqli_real_escape_string($sepsDbConnection, $initialUser) . "'");
+		$users = mysqli_fetch_row($userQuery);
 		if (!$users)
 		{
 			echo '<div class="errmsg">Takový uživatel neexistuje.</div>';
-			mysql_query('ROLLBACK');
+			mysqli_query($sepsDbConnection, 'ROLLBACK');
 			return;
 		}
 		$initialUserId = $users[0];
 	}
 
-    mysql_query("INSERT INTO projects(title) VALUES ('" . mysql_real_escape_string($projectName) . "')");
+    mysqli_query($sepsDbConnection, "INSERT INTO projects(title) VALUES ('" . mysqli_real_escape_string($sepsDbConnection, $projectName) . "')");
 	logMessage("Uživatel $sepsLoggedUsername založil nový projekt '$projectName'");
 
 	if ($initialUserId)
 	{
 		$fullAccess = sepsAccessMaxValidBit * 2 - 1;
-		mysql_query("INSERT INTO usersprojects(user, project, access) VALUES ($initialUserId, (SELECT p.id FROM projects p WHERE p.title='" . mysql_real_escape_string($projectName) . "'), $fullAccess)");
+		mysqli_query($sepsDbConnection, "INSERT INTO usersprojects(user, project, access) VALUES ($initialUserId, (SELECT p.id FROM projects p WHERE p.title='" . mysqli_real_escape_string($sepsDbConnection, $projectName) . "'), $fullAccess)");
 		logMessage("Do projektu '$projectName' byl přidán počáteční uživatel '$initialUser'");
 	}
 
-	mysql_query('COMMIT');
+	mysqli_query($sepsDbConnection, 'COMMIT');
 }
 
 function projectCreationForm()
@@ -72,7 +72,7 @@ function projectCreationForm()
 
 function deleteProject()
 {
-	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights;
+	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights, $sepsDbConnection;
 
 	if (!($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects)) return;
 
@@ -92,39 +92,39 @@ function deleteProject()
 		return;
 	}
 
-	mysql_query('BEGIN');
+	mysqli_query($sepsDbConnection, 'BEGIN');
 
-	$projectRow = mysql_fetch_array(mysql_query("SELECT title FROM projects WHERE id=$project"));
+	$projectRow = mysqli_fetch_array(mysqli_query($sepsDbConnection, "SELECT title FROM projects WHERE id=$project"));
 	if (!$projectRow)
 	{
 		echo '<div class="errmsg">Projekt neexistuje.</div>';
-		mysql_query('ROLLBACK');
+		mysqli_query($sepsDbConnection, 'ROLLBACK');
 		return;
 	}
 	$projectTitle = $projectRow[0];
 
-	if (!mysql_query("DELETE FROM emailcodes WHERE forproject=$project")) report_mysql_error();
-	$countCodes = mysql_affected_rows();
-	if (!mysql_query("DELETE subscriptions FROM subscriptions INNER JOIN events ON events.id=subscriptions.event INNER JOIN eventtypes ON eventtypes.id=events.eventtype WHERE eventtypes.project=$project")) report_mysql_error();
-	$countSubscriptions = mysql_affected_rows();
-	if (!mysql_query("DELETE events FROM events INNER JOIN eventtypes ON eventtypes.id=events.eventtype WHERE eventtypes.project=$project")) report_mysql_error();
-	$countEvents = mysql_affected_rows();
-	if (!mysql_query("DELETE FROM eventtypes WHERE project=$project")) report_mysql_error();
-	$countEventTypes = mysql_affected_rows();
-	if (!mysql_query("DELETE FROM usersprojects WHERE project=$project")) report_mysql_error();
-	$countUserProjects = mysql_affected_rows();
-	if (!mysql_query("DELETE FROM projects WHERE id=$project")) report_mysql_error();
+	if (!mysqli_query($sepsDbConnection, "DELETE FROM emailcodes WHERE forproject=$project")) report_mysql_error();
+	$countCodes = mysqli_affected_rows($sepsDbConnection);
+	if (!mysqli_query($sepsDbConnection, "DELETE subscriptions FROM subscriptions INNER JOIN events ON events.id=subscriptions.event INNER JOIN eventtypes ON eventtypes.id=events.eventtype WHERE eventtypes.project=$project")) report_mysql_error();
+	$countSubscriptions = mysqli_affected_rows($sepsDbConnection);
+	if (!mysqli_query($sepsDbConnection, "DELETE events FROM events INNER JOIN eventtypes ON eventtypes.id=events.eventtype WHERE eventtypes.project=$project")) report_mysql_error();
+	$countEvents = mysqli_affected_rows($sepsDbConnection);
+	if (!mysqli_query($sepsDbConnection, "DELETE FROM eventtypes WHERE project=$project")) report_mysql_error();
+	$countEventTypes = mysqli_affected_rows($sepsDbConnection);
+	if (!mysqli_query($sepsDbConnection, "DELETE FROM usersprojects WHERE project=$project")) report_mysql_error();
+	$countUserProjects = mysqli_affected_rows($sepsDbConnection);
+	if (!mysqli_query($sepsDbConnection, "DELETE FROM projects WHERE id=$project")) report_mysql_error();
 
 	logMessage("Uživatel $sepsLoggedUsername smazal projekt '$projectTitle': $countEvents/$countEventTypes/$countSubscriptions/$countUserProjects/$countCodes");
 	
-	mysql_query('COMMIT');
+	mysqli_query($sepsDbConnection, 'COMMIT');
 
 	echo '<div class="infomsg">Project ' . htmlspecialchars($projectTitle) . ' byl smazán.</div>';
 }
 
 function projectDeletionForm()
 {
-	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights;
+	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights, $sepsDbConnection;
 
 	if (!($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanDeleteProjects)) return;
 
@@ -137,8 +137,8 @@ function projectDeletionForm()
 	generateCsrfToken();
 
 	echo '<label for="project">Projekt:</label> <select name="project" id="project"><option value="" selected="1">[Vyberte projekt]</option>';
-	$query = mysql_query('SELECT id, title FROM projects');
-	while ($project = mysql_fetch_assoc($query))
+	$query = mysqli_query($sepsDbConnection, 'SELECT id, title FROM projects');
+	while ($project = mysqli_fetch_assoc($query))
 	{
 		$projectId = $project['id'];
 		$projectName = $project['title'];
@@ -155,7 +155,7 @@ function projectDeletionForm()
 
 function changeGlobalPermissions()
 {
-	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights, $sepsGlobalAccessFlagNames;
+	global $sepsLoggedUsername, $sepsLoggedUserGlobalRights, $sepsGlobalAccessFlagNames, $sepsDbConnection;
 
 	if (!($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions)) return;
 
@@ -173,8 +173,8 @@ function changeGlobalPermissions()
 		if (isset($_POST[$name]) && $_POST[$name] == '1') $finalAccess |= $accessBit;
 	}
 
-	mysql_query("UPDATE users SET globalrights=$finalAccess WHERE id=$managedUser LIMIT 1");
-	if (mysql_affected_rows() == 1)
+	mysqli_query($sepsDbConnection, "UPDATE users SET globalrights=$finalAccess WHERE id=$managedUser LIMIT 1");
+	if (mysqli_affected_rows($sepsDbConnection) == 1)
 	{
 		logMessage("Uživatel $sepsLoggedUsername nastavil globální práva uživatele #$managedUser na $finalAccess");
 		echo '<div class="infomsg">Globální práva nastavena.</div>';
@@ -188,7 +188,7 @@ function changeGlobalPermissions()
 
 function manageGlobalPermissionsForm()
 {
-	global $sepsLoggedUserGlobalRights, $sepsGlobalAccessFlagNames;
+	global $sepsLoggedUserGlobalRights, $sepsGlobalAccessFlagNames, $sepsDbConnection;
 
 	if (!($sepsLoggedUserGlobalRights & sepsGlobalAccessFlagsCanManageGlobalPermissions)) return;
 
@@ -197,8 +197,8 @@ function manageGlobalPermissionsForm()
 	$managedUsername = getVariableOrNull('manageduser');
 	if ($managedUsername)
 	{
-		$userQuery = mysql_query("SELECT id, globalrights FROM users WHERE username='" . mysql_real_escape_string($managedUsername) . "'");
-		$users = mysql_fetch_assoc($userQuery);
+		$userQuery = mysqli_query($sepsDbConnection, "SELECT id, globalrights FROM users WHERE username='" . mysqli_real_escape_string($sepsDbConnection, $managedUsername) . "'");
+		$users = mysqli_fetch_assoc($userQuery);
 		if (!$users)
 		{
 			echo '<div class="errmsg">Takový uživatel neexistuje.</div>';

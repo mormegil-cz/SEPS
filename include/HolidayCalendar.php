@@ -41,6 +41,8 @@ class HolidayCalendar
 
 	function computeHolidays($year)
 	{
+		global $sepsDbConnection;
+
 		$leapYear = (($year % 4) == 0) && ((($year % 100) != 0) || (($year % 400) == 0));
 
 		$easterDate = getdate(easter_date($year));
@@ -51,14 +53,14 @@ class HolidayCalendar
 		{
 			$result[$easter + $day] = true;
 		}
-		$country = mysql_real_escape_string($this->m_Country);
-		$query = mysql_query("SELECT day FROM holidays WHERE country='$country' AND fromyear<=$year AND toyear>=$year");
+		$country = mysqli_real_escape_string($sepsDbConnection, $this->m_Country);
+		$query = mysqli_query($sepsDbConnection, "SELECT day FROM holidays WHERE country='$country' AND fromyear<=$year AND toyear>=$year");
 		if (!$query)
 		{
 			report_mysql_error();
 			return $result;
 		}
-		while ($row = mysql_fetch_row($query))
+		while ($row = mysqli_fetch_row($query))
 		{
 			$day = $row[0];
 			if ($leapYear)

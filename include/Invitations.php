@@ -16,7 +16,7 @@ function formatInvitationText($head, $commentIntro, $comment, $tail)
 
 function sendInvitationTo($userid, $username, $email, $project, $projectname, $invitationtype, $comment = null)
 {
-    global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail;
+    global $sepsFullBaseUri, $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUsername, $sepsTitle, $sepsAdminMail, $sepsSoftwareVersionLine, $sepsLoggedUserEmail, $sepsDbConnection;
 
 	if (!$email || !$sepsAdminMail || !$userid) return false;
 
@@ -25,10 +25,10 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 
 	$projectOrNull = $project ? $project : "NULL";
 	$date = strftime('%Y-%m-%d %H:%M:%S');
-	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysql_real_escape_string(strtolower(trim($email))) . "', '" . mysql_real_escape_string($code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
-	if (!mysql_query($sql) || !mysql_affected_rows())
+	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysqli_real_escape_string($sepsDbConnection, strtolower(trim($email))) . "', '" . mysqli_real_escape_string($sepsDbConnection, $code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
+	if (!mysqli_query($sepsDbConnection, $sql) || !mysqli_affected_rows($sepsDbConnection))
 	{
-		echo '<div class="errmsg">MySQL error for [' . htmlspecialchars($sql) . ']: ' . mysql_error() . '</div>';
+		echo '<div class="errmsg">mysql error for [' . htmlspecialchars($sql) . ']: ' . mysqli_error($sepsDbConnection) . '</div>';
 		return false;
 	}
 
@@ -93,7 +93,7 @@ EOT;
 
 function invitationForm()
 {
-	global $sepsLoggedUser, $sepsLoggedUserEmail;
+	global $sepsLoggedUser, $sepsLoggedUserEmail, $sepsDbConnection;
 
 	if (!$sepsLoggedUserEmail) return;
 
@@ -103,11 +103,11 @@ function invitationForm()
 	generateCsrfToken();
 
 	echo '<label for="project">Projekt, do kterého chcete uživatele pozvat:</label> <select name="project" id="project" />';
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 			"SELECT p.id, p.title FROM projects p
 			INNER JOIN usersprojects up ON up.project=p.id
 			WHERE up.user = $sepsLoggedUser AND up.access & " . sepsAccessFlagsCanInvite);
-	while ($row = mysql_fetch_assoc($query))
+	while ($row = mysqli_fetch_assoc($query))
 	{
 		$projectid = $row['id'];
 		$projecttitle = htmlspecialchars($row['title']);
@@ -125,16 +125,17 @@ function invitationForm()
 
 function inviteUserInternal($email, $project, $projectname, $comment, $givenaccess)
 {
-	global $sepsLoggedUsername;
-	$userquery = mysql_query("SELECT u.id, u.username, u.caption FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.email = '" . mysql_real_escape_string($email) .  "'");
-	$founduser = mysql_fetch_assoc($userquery);
+	global $sepsLoggedUsername, $sepsDbConnection;
+
+	$userquery = mysqli_query($sepsDbConnection, "SELECT u.id, u.username, u.caption FROM users u INNER JOIN usersprojects up ON up.user=u.id WHERE u.email = '" . mysqli_real_escape_string($sepsDbConnection, $email) .  "'");
+	$founduser = mysqli_fetch_assoc($userquery);
 	if ($founduser)
 	{
 		$founduserid = $founduser['id'];
 		$foundusername = $founduser['username'];
 		$foundusercaption = $founduser['caption'];
-		$currentaccessquery = mysql_query("SELECT up.access FROM usersprojects up WHERE up.user=$founduserid AND up.project=$project LIMIT 1");
-		$currentaccessrow = mysql_fetch_row($currentaccessquery);
+		$currentaccessquery = mysqli_query($sepsDbConnection, "SELECT up.access FROM usersprojects up WHERE up.user=$founduserid AND up.project=$project LIMIT 1");
+		$currentaccessrow = mysqli_fetch_row($currentaccessquery);
 		if ($currentaccessrow)
 		{
 			// the user is already a member of this project
@@ -147,21 +148,21 @@ function inviteUserInternal($email, $project, $projectname, $comment, $givenacce
 			}
 
 			// ...but he will receive more access rights now
-			if (mysql_query("UPDATE usersprojects SET access=(access | $givenaccess) WHERE user=$founduserid AND project=$project LIMIT 1") && mysql_affected_rows() > 0)
+			if (mysqli_query($sepsDbConnection, "UPDATE usersprojects SET access=(access | $givenaccess) WHERE user=$founduserid AND project=$project LIMIT 1") && mysqli_affected_rows($sepsDbConnection) > 0)
 			{
 				logMessage("Uživatel $sepsLoggedUsername navýšil uživateli $foundusername přístupová oprávnění do projektu $projectname");
 				return array(true, "Uživatel $foundusercaption již byl členem tohoto projektu, avšak nyní mu byla zvýšena přístupová oprávnění");
 			}
 			else
 			{
-				echo mysql_error();
+				echo mysqli_error($sepsDbConnection);
 				return array(false, "Nepodařilo se navýšit oprávnění uživateli $foundusercaption");
 			}
 		}
 		else
 		{
 			// this user is not yet a member of this project
-			if (mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($founduserid, $project, $givenaccess)") && mysql_affected_rows() > 0)
+			if (mysqli_query($sepsDbConnection, "INSERT INTO usersprojects(user, project, access) VALUES($founduserid, $project, $givenaccess)") && mysqli_affected_rows($sepsDbConnection) > 0)
 			{
 				logMessage("Uživatel $sepsLoggedUsername přidal uživatele $foundusername do projektu $projectname");
 				return array(true, "Uživateli $foundusercaption byl přidělen přístup do tohoto projektu");
@@ -190,7 +191,7 @@ function inviteUserInternal($email, $project, $projectname, $comment, $givenacce
 
 function sendInvitation()
 {
-	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserEmail, $sepsDefaultInvitationAccess;
+	global $sepsLoggedUser, $sepsLoggedUserCaption, $sepsLoggedUserEmail, $sepsDefaultInvitationAccess, $sepsDbConnection;
 
 	$emailstr = getVariableOrNull('email');
 	$project = getVariableOrNull('project');
@@ -215,8 +216,8 @@ function sendInvitation()
 		return;
 	}
 
-	$query = mysql_query("SELECT p.title, up.access, p.invitationaccessmask FROM usersprojects up INNER JOIN projects p ON up.project=p.id WHERE up.user = $sepsLoggedUser AND up.project = $project");
-	$row = mysql_fetch_assoc($query);
+	$query = mysqli_query($sepsDbConnection, "SELECT p.title, up.access, p.invitationaccessmask FROM usersprojects up INNER JOIN projects p ON up.project=p.id WHERE up.user = $sepsLoggedUser AND up.project = $project");
+	$row = mysqli_fetch_assoc($query);
 	if (!$row)
 	{
 		echo '<div class="errmsg">Do tohoto projektu nemáte přístup.</div>';
@@ -247,13 +248,15 @@ function sendInvitation()
 
 function receivedInvitation($invitationCode, $errormessage = null)
 {
-	$query = mysql_query(
+	global $sepsDbConnection;
+
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT c.createdate, c.`type`, u.username
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0");
+		WHERE c.code='" . mysqli_real_escape_string($sepsDbConnection, $invitationCode) . "' AND c.accepted=0");
 
-	$basicInvitationData = mysql_fetch_assoc($query);
+	$basicInvitationData = mysqli_fetch_assoc($query);
 	if (!$basicInvitationData)
 	{
 		receivedProjectInvitation($invitationCode, $errormessage);
@@ -278,16 +281,16 @@ function receivedInvitation($invitationCode, $errormessage = null)
 
 function receivedProjectInvitation($invitationCode, $errormessage)
 {
-    global $sepsFullBaseUri;
+    global $sepsFullBaseUri, $sepsDbConnection;
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT c.createdate, c.forproject, u.caption AS user, p.title AS project
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
 		INNER JOIN projects p ON c.forproject=p.id
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
-	$data = mysql_fetch_assoc($query);
+		WHERE c.code='" . mysqli_real_escape_string($sepsDbConnection, $invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite);
+	$data = mysqli_fetch_assoc($query);
 	if (!$data)
 	{
 		echo '<h2>Neplatný kód</h2>';
@@ -337,12 +340,14 @@ function receivedProjectInvitation($invitationCode, $errormessage)
 
 function receivedEmailConfirmation($invitationCode)
 {
-	$query = mysql_query(
+	global $sepsDbConnection;
+
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT c.createdate, u.id, u.emailvalidated
 		FROM emailcodes c
 		INNER JOIN users u ON c.fromuser=u.id
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodeEmailConfirmation);
-	$data = mysql_fetch_assoc($query);
+		WHERE c.code='" . mysqli_real_escape_string($sepsDbConnection, $invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodeEmailConfirmation);
+	$data = mysqli_fetch_assoc($query);
 	if (!$data)
 	{
 		echo '<h2>Neplatný kód</h2>';
@@ -356,7 +361,7 @@ function receivedEmailConfirmation($invitationCode)
 	if (!$data['emailvalidated'])
 	{
 		// zvalidovat e-mail
-		if (mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid") && (mysql_affected_rows() > 0))
+		if (mysqli_query($sepsDbConnection, "UPDATE users SET emailvalidated=1 WHERE id=$userid") && (mysqli_affected_rows($sepsDbConnection) > 0))
 		{
 			echo '<div class="infomsg">Váš e-mail byl úspěšně ověřen.</div>';
 		}
@@ -392,6 +397,8 @@ function receivedPasswordReset($invitationCode, $username, $errormessage)
 
 function doPasswordReset()
 {
+	global $sepsDbConnection;
+
 	require_once('./include/Login.php');
 	$invitationCode = getVariableOrNull('invitation');
 	$username = getVariableOrNull('username');
@@ -404,11 +411,11 @@ function doPasswordReset()
 		return false;
 	}
 
-	$query = mysql_query(
+	$query = mysqli_query($sepsDbConnection, 
 		"SELECT c.createdate, c.fromuser
 		FROM emailcodes c
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodePasswordReset);
-	$data = mysql_fetch_assoc($query);
+		WHERE c.code='" . mysqli_real_escape_string($sepsDbConnection, $invitationCode) . "' AND c.accepted=0 AND c.type=" . sepsEmailCodePasswordReset);
+	$data = mysqli_fetch_assoc($query);
 	if (!$data)
 	{
 		echo '<h2>Neplatný kód</h2>';
@@ -420,10 +427,10 @@ function doPasswordReset()
 	$userid = $data['fromuser'];
 	$passhash = hashPassword($password);
 
-	$sql = "UPDATE users SET password='$passhash' WHERE id=$userid AND username='" . mysql_real_escape_string($username) . "' LIMIT 1";
-	if (!mysql_query($sql) || (mysql_affected_rows() != 1))
+	$sql = "UPDATE users SET password='$passhash' WHERE id=$userid AND username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "' LIMIT 1";
+	if (!mysqli_query($sepsDbConnection, $sql) || (mysqli_affected_rows($sepsDbConnection) != 1))
 	{
-		echo '<div class="errmsg">Chyba při změně hesla [' . htmlspecialchars($sql) . ']: ' . mysql_error() . '</div>';
+		echo '<div class="errmsg">Chyba při změně hesla [' . htmlspecialchars($sql) . ']: ' . mysqli_error($sepsDbConnection) . '</div>';
 		return false;
 	}
 
@@ -433,7 +440,9 @@ function doPasswordReset()
 
 function invalidateAllEmailConfirmationsForUser($user)
 {
-	return mysql_query(
+	global $sepsDbConnection;
+
+	return mysqli_query($sepsDbConnection, 
 		"UPDATE emailcodes c
 			SET c.accepted=1
 			WHERE c.fromuser=$user AND c.accepted=0 AND c.forproject IS NULL");
@@ -441,7 +450,7 @@ function invalidateAllEmailConfirmationsForUser($user)
 
 function acceptedInvitation()
 {
-	global $sepsDefaultInvitationAccess;
+	global $sepsDefaultInvitationAccess, $sepsDbConnection;
 
 	$invitationCode = getVariableOrNull('invitation');
 	$username = mb_strtolower(trim(getVariableOrNull('username')));
@@ -460,13 +469,13 @@ function acceptedInvitation()
 		return FALSE;
 	}
 
-	$invitationQuery = mysql_query(
+	$invitationQuery = mysqli_query($sepsDbConnection, 
 		"SELECT c.id, c.fromuser, c.email, up.access, c.forproject, p.invitationaccessmask
 		FROM emailcodes c
 		INNER JOIN usersprojects up ON c.forproject=up.project AND c.fromuser=up.user
 		INNER JOIN projects p ON c.forproject=p.id
-		WHERE c.code='" . mysql_real_escape_string($invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite . " AND c.type=" . sepsEmailCodeProjectInvitation);
-	$invitation = mysql_fetch_assoc($invitationQuery);
+		WHERE c.code='" . mysqli_real_escape_string($sepsDbConnection, $invitationCode) . "' AND c.accepted=0 AND up.access & " . sepsAccessFlagsCanInvite . " AND c.type=" . sepsEmailCodeProjectInvitation);
+	$invitation = mysqli_fetch_assoc($invitationQuery);
 	if (!$invitation)
 	{
 		receivedInvitation($invitationCode, 'Tato pozvánka není platná.');
@@ -475,8 +484,8 @@ function acceptedInvitation()
 
 	$projectAccessMask = ~intval($invitation['invitationaccessmask']);
 
-	$userquery = mysql_query("SELECT u.id FROM users u WHERE u.username = '" . mysql_real_escape_string($username) . "'");
-	$founduser = mysql_fetch_assoc($userquery);
+	$userquery = mysqli_query($sepsDbConnection, "SELECT u.id FROM users u WHERE u.username = '" . mysqli_real_escape_string($sepsDbConnection, $username) . "'");
+	$founduser = mysqli_fetch_assoc($userquery);
 	if ($founduser)
 	{
 		if (!tryLogin($username, $password))
@@ -485,38 +494,38 @@ function acceptedInvitation()
 			return FALSE;
 		}
 
-	    mysql_query("BEGIN");
+	    mysqli_query($sepsDbConnection, "BEGIN");
 
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
 		$userid = $founduser['id'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
 
-		if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysqli_affected_rows($sepsDbConnection) != 1)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
 			return FALSE;
 		}
 
 		// nastavit příznak ověření e-mailu
-		if (!mysql_query("UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1") || mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "UPDATE users SET emailvalidated=1 WHERE id=$userid LIMIT 1") || mysqli_affected_rows($sepsDbConnection) != 1)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
 			return FALSE;
 		}
 
 		// označit pozvánku jako použitou
 		$invitationId = $invitation['id'];
-		if (!mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysqli_affected_rows($sepsDbConnection) != 1)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Váš požadavek se nepodařilo zpracovat. Kontaktujte správce serveru.');
 			return FALSE;
 		}
 
-		mysql_query("COMMIT");
+		mysqli_query($sepsDbConnection, "COMMIT");
 
 		logMessage("Uživatel $username přijal pozvánku číslo $invitationCode");
 
@@ -549,38 +558,38 @@ function acceptedInvitation()
 			return FALSE;
 		}
 
-	    mysql_query("BEGIN");
+	    mysqli_query($sepsDbConnection, "BEGIN");
 
 		// založit nového uživatele
-		if (!mysql_query("INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
-			. mysql_real_escape_string($username) . "', '"
-			. mysql_real_escape_string($caption) . "', '"
-			. mysql_real_escape_string($firstname) . "', '"
-			. mysql_real_escape_string($lastname) . "', '"
-			. mysql_real_escape_string(hashPassword($password)) . "', '"
-			. mysql_real_escape_string($email) . "', '"
-			. mysql_real_escape_string($jabber) . "', '"
-			. mysql_real_escape_string($skype) . "', '"
-			. mysql_real_escape_string($icq) . "', 1)")
-				|| mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "INSERT INTO users(username, caption, firstname, lastname, password, email, jabber, skype, icq, emailvalidated) VALUES ('"
+			. mysqli_real_escape_string($sepsDbConnection, $username) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $caption) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $firstname) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $lastname) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, hashPassword($password)) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $email) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $jabber) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $skype) . "', '"
+			. mysqli_real_escape_string($sepsDbConnection, $icq) . "', 1)")
+				|| mysqli_affected_rows($sepsDbConnection) != 1)
 		{
 			report_mysql_error();
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se založit uživatele, zkuste to znovu.');
 			return FALSE;
 		}
 
-		$createduserQuery = mysql_query("SELECT u.id FROM users u WHERE u.username = '" . mysql_real_escape_string($username) . "'");
+		$createduserQuery = mysqli_query($sepsDbConnection, "SELECT u.id FROM users u WHERE u.username = '" . mysqli_real_escape_string($sepsDbConnection, $username) . "'");
 		if (!$createduserQuery)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se zpracovat uživatele, zkuste to znovu.');
 			return FALSE;
 		}
-		$createduser = mysql_fetch_assoc($createduserQuery);
+		$createduser = mysqli_fetch_assoc($createduserQuery);
 		if (!$createduser)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se dohledat uživatele, zkuste to znovu.');
 			return FALSE;
 		}
@@ -589,23 +598,23 @@ function acceptedInvitation()
 		// přidat uživatele do projektu
 		$project = $invitation['forproject'];
 		$access = $invitation['access'] & $sepsDefaultInvitationAccess & $projectAccessMask;
-		if (!mysql_query("INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "INSERT INTO usersprojects(user, project, access) VALUES($userid, $project, $access)") || mysqli_affected_rows($sepsDbConnection) != 1)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Uživatele se nepodařilo přidat do projektu, zkuste to znovu.');
 			return FALSE;
 		}
 
 		// označit pozvánku jako použitou
 		$invitationId = $invitation['id'];
-		if (!mysql_query("UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysql_affected_rows() != 1)
+		if (!mysqli_query($sepsDbConnection, "UPDATE emailcodes SET accepted=1 WHERE id=$invitationId LIMIT 1") || mysqli_affected_rows($sepsDbConnection) != 1)
 		{
-			mysql_query("ROLLBACK");
+			mysqli_query($sepsDbConnection, "ROLLBACK");
 			receivedInvitation($invitationCode, 'Nepodařilo se zpracovat, zkuste to znovu.');
 			return FALSE;
 		}
 
-		mysql_query("COMMIT");
+		mysqli_query($sepsDbConnection, "COMMIT");
 
 		logMessage("Založen uživatel $username na základě pozvánky číslo $invitationCode");
 

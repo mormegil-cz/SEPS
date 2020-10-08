@@ -680,7 +680,7 @@ function newEventForm($date)
 		echo 'Typ události: <select name="eventtype">';
 		foreach($availableTypes as $typeid => $typename)
 		{
-			echo "<option value='$typeid'>$typename</option>";
+			echo "<option value='$typeid'>" . htmlspecialchars($typename) . "</option>";
 		}
 		echo '</select><br />';
 		echo '<input type="submit" value="Vytvořit událost" />';

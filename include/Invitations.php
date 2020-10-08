@@ -28,7 +28,7 @@ function sendInvitationTo($userid, $username, $email, $project, $projectname, $i
 	$sql = "INSERT INTO emailcodes (email, code, fromuser, createdate, forproject, type) VALUES ('" . mysqli_real_escape_string($sepsDbConnection, strtolower(trim($email))) . "', '" . mysqli_real_escape_string($sepsDbConnection, $code) . "' , $userid, '$date', $projectOrNull, $invitationtype)";
 	if (!mysqli_query($sepsDbConnection, $sql) || !mysqli_affected_rows($sepsDbConnection))
 	{
-		echo '<div class="errmsg">mysql error for [' . htmlspecialchars($sql) . ']: ' . mysqli_error($sepsDbConnection) . '</div>';
+		report_mysql_error();
 		return false;
 	}
 
@@ -155,7 +155,7 @@ function inviteUserInternal($email, $project, $projectname, $comment, $givenacce
 			}
 			else
 			{
-				echo mysqli_error($sepsDbConnection);
+				report_mysql_error();
 				return array(false, "Nepodařilo se navýšit oprávnění uživateli $foundusercaption");
 			}
 		}
@@ -430,7 +430,7 @@ function doPasswordReset()
 	$sql = "UPDATE users SET password='$passhash' WHERE id=$userid AND username='" . mysqli_real_escape_string($sepsDbConnection, $username) . "' LIMIT 1";
 	if (!mysqli_query($sepsDbConnection, $sql) || (mysqli_affected_rows($sepsDbConnection) != 1))
 	{
-		echo '<div class="errmsg">Chyba při změně hesla [' . htmlspecialchars($sql) . ']: ' . mysqli_error($sepsDbConnection) . '</div>';
+		report_mysql_error();
 		return false;
 	}
 

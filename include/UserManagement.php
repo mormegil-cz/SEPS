@@ -71,11 +71,12 @@ function manageUsersForm()
 	{
 		echo '<h2>Správa uživatelů projektu ' . htmlspecialchars($projectName) . '</h2>';
 		echo '<label for="user">Uživatel:</label> <select name="user" id="user">';
-		$query = mysqli_query($sepsDbConnection, "SELECT u.id, u.caption, u.username FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
+		$query = mysqli_query($sepsDbConnection, "SELECT u.id, u.caption, u.username, u.email FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
 		while ($row = mysqli_fetch_assoc($query))
 		{
 			$title = $row['caption'];
 			if (!$title) $title = $row['username'];
+			if ($row['email']) $title .= ' <' . $row['email'] . '>';
 			echo "<option value='$row[id]'>" . htmlspecialchars($title) . "</option>";
 		}
 		echo '</select><br />';
@@ -112,12 +113,17 @@ function manageUsersForm()
 		echo '<thead><caption>Seznam uživatelů</caption></thead>';
 		echo '<tbody>';
 		echo '<tr><th>Uživatel</th><th>Priorita</th><th>Oprávnění</th></tr>';
-		$query = mysqli_query($sepsDbConnection, "SELECT u.caption, u.username, up.priority, up.access FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
+		$query = mysqli_query($sepsDbConnection, "SELECT u.caption, u.username, up.priority, up.access, u.email FROM users u INNER JOIN usersprojects up ON up.user=u.id AND up.project=$projectId");
 		while ($row = mysqli_fetch_assoc($query))
 		{
 			$title = $row['caption'];
 			if (!$title) $title = $row['username'];
-			echo '<tr><td>' . $title . '</td><td class="number">' . userPriorityToString($row['priority']) . '</td><td><tt>';
+			$email = $row['email'];
+			echo '<tr><td>';
+			if ($email) echo '<span title="' . htmlspecialchars($email, ENT_QUOTES) . '">';
+			echo htmlspecialchars($title);
+			if ($email) echo '</span>';
+			echo '</td><td class="number">' . userPriorityToString($row['priority']) . '</td><td><tt>';
 			$access = $row['access'];
 			for ($mask = 1, $idx = 1; $mask <= sepsAccessMaxValidBit; $mask <<= 1, $idx++)
 			{
@@ -179,7 +185,7 @@ function modifyUser($projectId, $projectName)
 		else
 		{
 			echo '<div class="errmsg">Nepodařilo se vyřadit uživatele z projektu</div>';
-			echo mysqli_error($sepsDbConnection);
+			report_mysql_error();
 		}
 		return;
 	}

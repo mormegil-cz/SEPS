@@ -25,7 +25,7 @@ function showEventList()
 		$subscriberCount = $event->getSubscriberCount();
 		$date = strtotime($event->getDate());
 		$datestr = strftime('%d.&nbsp;%m.', $date);
-		echo "<li><div class='$cssClass'><a class='date' href='?date=$date'>$datestr</a>: <a class='event-detail' href='?eid=$eid&amp;date=$date'>$eventTitle</a></div></li>";
+		echo "<li><div class='$cssClass'><a class='date' href='?date=$date'>$datestr</a>: <a class='event-detail' href='?eid=$eid&amp;date=$date'>" . htmlspecialchars($eventTitle) . "</a></div></li>";
 	}
 	echo '</ul>';
 	echo '</div>';
